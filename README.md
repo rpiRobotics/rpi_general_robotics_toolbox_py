@@ -6,6 +6,6 @@ The following operations are currently implemented:
 * Rotation and Pose: hat, rot, q2r, R2q, quatcomplement, quatproduct, quatjacobian, Pose class, screw_matrix
 * Robot Parameters: Robot class
 * Forward Kinematics: fwdkin, robotjacobian
-* Paden-Kahan geometry subproblems: subproblems 0 - 3
+* Canonical geometric subproblems: subproblems 0 - 3
 
 License: BSD

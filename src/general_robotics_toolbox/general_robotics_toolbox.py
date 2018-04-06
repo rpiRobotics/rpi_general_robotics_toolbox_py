@@ -391,7 +391,7 @@ def robotjacobian(robot, theta):
 
 def subproblem0(p, q, k):
     """
-    Solves Paden-Kahan subproblem 0, theta subtended between p and q according to
+    Solves canonical geometric subproblem 0, theta subtended between p and q according to
     
         q = rot(k, theta)*p
            ** assumes k'*p = 0 and k'*q = 0
@@ -427,7 +427,7 @@ def subproblem0(p, q, k):
 
 def subproblem1(p, q, k):
     """
-    Solves Paden-Kahan subproblem 1, theta subtended between p and q according to
+    Solves canonical geometric subproblem 1, theta subtended between p and q according to
     
         q = rot(k, theta)*p
     
@@ -466,7 +466,7 @@ def subproblem1(p, q, k):
 
 def subproblem2(p, q, k1, k2):
     """
-    Solves Paden-Kahan subproblem 2, solve for two coincident, nonparallel
+    Solves canonical geometric subproblem 2, solve for two coincident, nonparallel
     axes rotation a link according to
     
         q = rot(k1, theta1) * rot(k2, theta2) * p
@@ -531,7 +531,7 @@ def subproblem2(p, q, k1, k2):
 def subproblem3(p, q, k, d):
     
     """
-    Solves Paden-Kahan subproblem 3,solve for theta in
+    Solves canonical geometric subproblem 3,solve for theta in
     an elbow joint according to
     
         || q + rot(k, theta)*p || = d
