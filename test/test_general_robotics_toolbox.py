@@ -230,6 +230,18 @@ class Test_subproblems(unittest.TestCase):
         
         assert len(a5) == 1
         np.testing.assert_allclose(np.linalg.norm(np.add(q4, rox.rot(z, a5[0]).dot(p4))),1.25)
+        
+        #subproblem4
+        
+        p6=y
+        q6=[.8, .2, .5]
+        d6=.3
+        
+        a6=rox.subproblem4(p6, q6, z, d6)
+                
+        np.testing.assert_allclose(np.dot(p6, rox.rot(z,a6[0]).dot(q6)), d6, atol=1e-4)
+        np.testing.assert_allclose(np.dot(p6, rox.rot(z,a6[1]).dot(q6)), d6, atol=1e-4)
+                
                 
 def puma260b_robot():
     """Returns an approximate Robot instance for a Puma 260B robot"""
@@ -248,6 +260,23 @@ def puma260b_robot():
     return rox.Robot(H, P, joint_type, joint_min, joint_max)    
     
     
+def abb_irb6640_180_255_robot():
+    """Return a Robot instance for the ABB IRB6640 180-255 robot"""
+    
+    x=np.array([1,0,0])
+    y=np.array([0,1,0])
+    z=np.array([0,0,1])
+    a=np.array([0,0,0])
+    
+    H = np.array([z,y,y,x,y,x])
+    P = np.array([0.78*z, 0.32*x, 1.075*z, 0.2*z, 1.142*x, 0.2*x, a])
+    joint_type=[0,0,0,0,0,0]
+    joint_min=np.deg2rad(np.array([-170, -65, -180, -300, -120, -360]))
+    joint_max=np.deg2rad(np.array([170,  85, 70,  300,  120,  360]))
+    
+    return rox.Robot(H, P, joint_type, joint_min, joint_max) 
+    
+    
 class GeneralRoboticsToolboxTestSuite(unittest.TestSuite):
     def __init__(self):
         super(GeneralRoboticsToolboxTestSuite, self).__init__()
@@ -260,6 +289,7 @@ class GeneralRoboticsToolboxTestSuite(unittest.TestSuite):
         self.addTest(Test_quatjacobian())
         self.addTest(Test_fwdkin())
         self.addTest(Test_robotjacobian())
+        self.addTest(Test_subproblems())
 
      
 if __name__ == '__main__':

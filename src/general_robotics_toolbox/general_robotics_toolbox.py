@@ -213,15 +213,17 @@ class Robot(object):
     
     :attribute H: A 3 x N matrix containing the direction the joints as unit vectors, one joint per column
     :attribute P: A 3 x (N + 1) matrix containing the distance vector from i to i+1, one vector per column
-    :attribute joint_type: A list of N members containing the joint type. 0 for rotary, 1 for prismatic, 2 and 3 for mobile
-    :attribute joint_min: A list of N members containing the joint minimums
-    :attribute joint_max: A list of N members containing the joint maximum
+    :attribute joint_type: A list of N numbers containing the joint type. 0 for rotary, 1 for prismatic, 2 and 3 for mobile
+    :attribute joint_lower_limit: A list of N numbers containing the joint lower limits. Optional
+    :attribute joint_upper_limit: A list of N numbers containing the joint upper limits. Optional
+    :attribute joint_vel_limit: A list of N numbers containing the joint velocity limits. Optional
+    :attribute joint_acc_limit: A list of N numbers containing the joint acceleration limits. Optional
     :attribute M: A list of N, 6 x 6 spatial inertia matrices for the links. Optional 
     
     """
     
     
-    def __init__(self, H, P, joint_type, joint_min = None, joint_max = None, M = None):
+    def __init__(self, H, P, joint_type, joint_lower_limit = None, joint_upper_limit = None, joint_vel_limit = None, joint_acc_limit = None, M = None):
         
         """
         Construct a Robot object holding the kinematic information for a single chain robot
@@ -231,11 +233,15 @@ class Robot(object):
         :type  H: numpy. array
         :param P: A 3 x (N + 1) matrix containing the distance vector from i to i+1, one vector per column
         :type  joint_type: list or numpy.array
-        :param joint_type: A list or array of N members containing the joint type. 0 for rotary, 1 for prismatic, 2 and 3 for mobile
-        :type  joint_min: list or numpy.array
-        :param joint_min: A list or array of N members containing the joint type minimums
-        :type  joint_max: list or numpy.array
-        :param joint_max: A list or array of N members containing the joint type maximums
+        :param joint_type: A list or array of N numbers containing the joint type. 0 for rotary, 1 for prismatic, 2 and 3 for mobile
+        :type  joint_lower_limit: list or numpy.array
+        :param joint_lower_limit: A list or array of N numbers containing the joint type minimums. Optional
+        :type  joint_upper_limit: list or numpy.array
+        :param joint_upper_limit: A list or array of N numbers containing the joint type maximums. Optional
+        :type  joint_vel_limit: list or numpy.array
+        :param joint_vel_limit: A list of N numbers containing the joint velocity limits. Optional
+        :type  joint_acc_limit: list or numpy.array
+        :param joint_acc_limit: A list of N numbers containing the joint acceleration limits. Optional
         :type  M: list of numpy.array
         :param M: A list of N, 6 x 6 spatial inertia matrices for the links. Optional
     
@@ -251,22 +257,39 @@ class Robot(object):
         assert (H.shape[0] == 3 and P.shape[0] == 3)
         assert (H.shape[1] + 1 == P.shape[1] and H.shape[1] == len(joint_type))
         
-        if (joint_min is not None and joint_max is not None):
-            self.joint_min=joint_min
-            self.joint_max=joint_max
+        if (joint_lower_limit is not None and joint_upper_limit is not None):
+            assert (len(joint_lower_limit) == len(joint_type))
+            assert (len(joint_upper_limit) == len(joint_type))
+            self.joint_lower_limit=joint_lower_limit
+            self.joint_upper_limit=joint_upper_limit
         else:
-            self.joint_min=None
-            self.joint_max=None
+            self.joint_lower_limit=None
+            self.joint_upper_limit=None
+            
+        if (joint_vel_limit is not None):
+            assert (len(joint_vel_limit) == len(joint_type))
+            self.joint_vel_limit=joint_vel_limit
+        else:
+            self.joint_vel_limits=None
+            
+        if (joint_acc_limit is not None):
+            assert (len(joint_acc_limit) == len(joint_type))
+            self.joint_acc_limit=joint_acc_limit
+        else:
+            self.joint_acc_limits=None
                
         if M is not None:
             assert (len(M) == H.shape[1])
             for m in M:
                 assert (m.shape == (6,6))
+            self.M = M
+        else:
+            self.M=None
         
         self.H = H
         self.P = P
         self.joint_type = joint_type
-        self.M = M
+        
     
             
 class Pose(object):
@@ -312,9 +335,9 @@ def fwdkin(robot, theta):
     :return: The Pose of the robot tool flange    
     """    
     
-    if (robot.joint_min is not None and robot.joint_max is not None):
-        assert np.greater_equal(theta, robot.joint_min).all(), "Specified joints out of range"
-        assert np.less_equal(theta, robot.joint_max).all(), "Specified joints out of range"
+    if (robot.joint_lower_limit is not None and robot.joint_upper_limit is not None):
+        assert np.greater_equal(theta, robot.joint_lower_limit).all(), "Specified joints out of range"
+        assert np.less_equal(theta, robot.joint_upper_limit).all(), "Specified joints out of range"
     
     p = robot.P[:,[0]]
     R = np.identity(3)
@@ -340,9 +363,9 @@ def robotjacobian(robot, theta):
     :returns: The 6 x N Jacobian matrix    
     """
     
-    if (robot.joint_min is not None and robot.joint_max is not None):
-        assert np.greater_equal(theta, robot.joint_min).all(), "Specified joints out of range"
-        assert np.less_equal(theta, robot.joint_max).all(), "Specified joints out of range"
+    if (robot.joint_lower_limit is not None and robot.joint_upper_limit is not None):
+        assert np.greater_equal(theta, robot.joint_lower_limit).all(), "Specified joints out of range"
+        assert np.less_equal(theta, robot.joint_upper_limit).all(), "Specified joints out of range"
     
     
     hi = np.zeros(robot.H.shape)
@@ -570,5 +593,42 @@ def subproblem3(p, q, k, d):
         return [theta + phi, theta - phi]
     else:
         return [theta]
+    
+def subproblem4(p, q, k, d):
+    """
+    Solves canonical geometric subproblem 4, theta for static
+    displacement from rotation axis according to
+    
+        d = p.T*rot(k, theta)*q
+        
+    may have 0, 1, or 2 solutions
+        
+    :type    p: numpy.array
+    :param   p: 3 x 1 position vector of point p
+    :type    q: numpy.array
+    :param   q: 3 x 1 position vector of point q
+    :type    k: numpy.array
+    :param   k: 3x1 rotation axis for point p
+    :type    d: number
+    :param   d: desired displacement
+    :rtype:  list of numbers
+    :return: list of valid theta angles in radians    
+    """
+    
+    c = np.subtract(d, (np.dot(p,q) + np.dot(p,hat(k)).dot(hat(k)).dot(q)))
+    a = np.dot(p,hat(k)).dot(q)
+    b = -np.dot(p, hat(k).dot(hat(k)).dot(q))
+    
+    phi = np.arctan2(b, a)
+    
+    d = c / np.linalg.norm([a,b])
+    
+    if d > 1:
+        return []
+    
+    psi = np.arcsin(d)
+    
+    return [-phi+psi, -phi-psi+np.pi]
+    
     
     
