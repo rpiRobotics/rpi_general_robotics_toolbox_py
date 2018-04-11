@@ -26,13 +26,13 @@ class Test_rot(unittest.TestCase):
         np.testing.assert_allclose(rot, rot_t, atol=1e-5)
     
     def runTest(self):
-        rot_1_t=np.array([[1,0,0], [0,0,1], [0,-1,0]]).transpose()
+        rot_1_t=np.array([[1,0,0], [0,0,1], [0,-1,0]]).T
         self._rot_test(np.array([1,0,0]), np.pi/2.0, rot_1_t)
         
-        rot_2_t=np.array([[0,0,-1], [0,1,0], [1,0,0]]).transpose()
+        rot_2_t=np.array([[0,0,-1], [0,1,0], [1,0,0]]).T
         self._rot_test(np.array([0,1,0]), np.pi/2.0, rot_2_t)
         
-        rot_3_t=np.array([[0,1,0], [-1,0,0], [0,0,1]]).transpose()
+        rot_3_t=np.array([[0,1,0], [-1,0,0], [0,0,1]]).T
         self._rot_test(np.array([0,0,1]), np.pi/2.0, rot_3_t)
         
         #Random rotation
@@ -63,7 +63,7 @@ class Test_R2q(unittest.TestCase):
                       [0.6456962,-0.7139224,0.2709081], \
                       [0.5720833,0.6872731,0.4476342]])
         
-        q_t=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).transpose()
+        q_t=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).T
         q=rox.R2q(rot)
         np.testing.assert_allclose(q_t, q, atol=1e-6)
      
@@ -74,7 +74,7 @@ class Test_q2R(unittest.TestCase):
                       [0.6456962,-0.7139224,0.2709081], \
                       [0.5720833,0.6872731,0.4476342]])
         
-        q=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).transpose()
+        q=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).T
         rot=rox.q2R(q)
         np.testing.assert_allclose(rot, rot_t, atol=1e-6)
 
@@ -82,7 +82,7 @@ class Test_quatcomplement(unittest.TestCase):
     
     def runTest(self):
         
-        q=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).transpose()
+        q=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).T
         q_c=rox.quatcomplement(q)
         np.testing.assert_allclose(q[0], q_c[0])
         np.testing.assert_allclose(q[1:3], -q_c[1:3])
@@ -152,7 +152,7 @@ class Test_robotjacobian(unittest.TestCase):
         J=rox.robotjacobian(puma, np.zeros(6))
         np.testing.assert_allclose(J[0:3,:], puma.H, atol=1e-4)
         J_t_v=np.array([[4.9,10,0],[-8.75,0,-10],[-8,0,-2.2], \
-                        [0,2.2,0],[0,0,-2.2],[0,0,0]]).transpose()*in_2_m
+                        [0,2.2,0],[0,0,-2.2],[0,0,0]]).T*in_2_m
         np.testing.assert_allclose(J[3:6,:], J_t_v, atol=1e-4)
 
 
@@ -242,6 +242,61 @@ class Test_subproblems(unittest.TestCase):
         np.testing.assert_allclose(np.dot(p6, rox.rot(z,a6[0]).dot(q6)), d6, atol=1e-4)
         np.testing.assert_allclose(np.dot(p6, rox.rot(z,a6[1]).dot(q6)), d6, atol=1e-4)
                 
+class Test_robot6_sphericalwrist_invkin(unittest.TestCase):
+    
+    def runTest(self):
+        
+        robot1=puma260b_robot()
+        robot2=abb_irb6640_180_255_robot()
+        
+        def _test_configuration(robot, theta):
+            
+            pose_1 = rox.fwdkin(robot, theta)
+            theta2 = rox.robot6_sphericalwrist_invkin(robot, pose_1)
+            
+            if not len(theta2) > 0:
+                return False
+            for theta2_i in theta2:
+                pose_2 = rox.fwdkin(robot, theta2_i)
+                if not pose_1 == pose_2:
+                    return False
+            return True
+        
+        def _test_last_configuration(robot, theta, last_theta):
+            
+            pose_1 = rox.fwdkin(robot, theta)
+            theta2 = rox.robot6_sphericalwrist_invkin(robot, pose_1, last_theta)
+            pose_2 = rox.fwdkin(robot, theta2[0])
+            if not pose_1 == pose_2:
+                return False
+            if not np.allclose(theta2[0], last_theta, atol=np.deg2rad(10)):
+                return False
+            return True
+            
+        
+        assert _test_configuration(robot1, np.zeros(6))
+        #Previous failed value, add to unit test
+        assert _test_configuration(robot2, [-0.09550528, -0.43532822, -2.35369965, -2.42324955, -1.83659391, -4.00786639])    
+        
+        for robot in (robot1,robot2):        
+            for _ in xrange(100):
+                theta = np.random.rand(6)*(robot.joint_upper_limit - robot.joint_lower_limit) \
+                   + robot.joint_lower_limit
+                                                    
+                assert _test_configuration(robot, theta)
+          
+        theta_test1 = np.zeros(6)
+        assert _test_last_configuration(robot1, theta_test1, theta_test1 + np.deg2rad(4))
+        assert _test_last_configuration(robot2, theta_test1 - np.deg2rad(4), np.array([0,0,0,0,0,np.pi*2]))
+                        
+        for robot in (robot1,robot2):        
+            for _ in xrange(100):
+                theta = np.random.rand(6)*(robot.joint_upper_limit - robot.joint_lower_limit - np.deg2rad(30)) \
+                   + robot.joint_lower_limit + np.deg2rad(15)
+                                                    
+                last_theta = theta + (np.random.rand(6)-0.5)*2*np.deg2rad(4)
+                assert _test_last_configuration(robot, theta, last_theta)
+    
                 
 def puma260b_robot():
     """Returns an approximate Robot instance for a Puma 260B robot"""
@@ -251,11 +306,11 @@ def puma260b_robot():
     z=np.array([0,0,1])
     a=np.array([0,0,0])
     
-    H = np.array([z,y,y,z,y,x]).transpose()    
-    P = np.array([13*z, a, (-4.9*y + 7.8*x -0.75*z), -8.0*z, a, a, 2.2*x]).transpose()*in_2_m
+    H = np.array([z,y,y,z,y,x]).T    
+    P = np.array([13*z, a, (-4.9*y + 7.8*x -0.75*z), -8.0*z, a, a, 2.2*x]).T*in_2_m
     joint_type=[0,0,0,0,0,0]
-    joint_min=np.array([-5, -256, -214, -384, -32, -267])*np.pi/180.0
-    joint_max=np.array([313, 76, 34, 194, 212, 267])*np.pi/180
+    joint_min=np.deg2rad(np.array([-5, -256, -214, -384, -32, -267]))
+    joint_max=np.deg2rad(np.array([313, 76, 34, 194, 212, 267]))
     
     return rox.Robot(H, P, joint_type, joint_min, joint_max)    
     
@@ -268,8 +323,8 @@ def abb_irb6640_180_255_robot():
     z=np.array([0,0,1])
     a=np.array([0,0,0])
     
-    H = np.array([z,y,y,x,y,x])
-    P = np.array([0.78*z, 0.32*x, 1.075*z, 0.2*z, 1.142*x, 0.2*x, a])
+    H = np.array([z,y,y,x,y,x]).T
+    P = np.array([0.78*z, 0.32*x, 1.075*z, 0.2*z, 1.142*x, 0.2*x, a]).T
     joint_type=[0,0,0,0,0,0]
     joint_min=np.deg2rad(np.array([-170, -65, -180, -300, -120, -360]))
     joint_max=np.deg2rad(np.array([170,  85, 70,  300,  120,  360]))
@@ -290,6 +345,7 @@ class GeneralRoboticsToolboxTestSuite(unittest.TestSuite):
         self.addTest(Test_fwdkin())
         self.addTest(Test_robotjacobian())
         self.addTest(Test_subproblems())
+        self.addTest(Test_robot6_sphericalwrist_invkin())
 
      
 if __name__ == '__main__':

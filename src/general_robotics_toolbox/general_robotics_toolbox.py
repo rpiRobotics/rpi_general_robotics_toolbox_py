@@ -9,9 +9,10 @@
 #     * Redistributions in binary form must reproduce the above copyright
 #       notice, this list of conditions and the following disclaimer in the
 #       documentation and/or other materials provided with the distribution.
-#     * Neither the name of the Willow Garage, Inc. nor the names of its
-#       contributors may be used to endorse or promote products derived from
-#       this software without specific prior written permission.
+#     * Neither the name of the Rensselaer Polytechnic Institute, nor Wason 
+#       Technology LLC, nor the names of its contributors may be used to 
+#       endorse or promote products derived from this software without 
+#       specific prior written permission.
 # 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -322,6 +323,14 @@ class Pose(object):
         p = self.p + np.dot(self.R, other.p)
         return Pose(R,p)
     
+    def __eq__(self, other):
+        #Use "np.isclose" because of numerical accuracy issues
+        return np.all(np.isclose(self.R, other.R, 1e-6)) \
+            and np.all(np.isclose(self.p, other.p, 1e-6))
+            
+    def __neq__(self, other):
+        return not self.__eq__(other) 
+    
 def fwdkin(robot, theta):
     """
     Computes the pose of the robot tool flange based on a Robot object
@@ -536,13 +545,13 @@ def subproblem2(p, q, k1, k2):
     
     gamma = np.sqrt(bb) / norm(np.cross(k1,k2))
     if (np.abs(gamma) < eps):
-        cm=np.array([k1, k2, np.cross(k1,k2)]).transpose()
+        cm=np.array([k1, k2, np.cross(k1,k2)]).T
         c1 = np.dot(cm, np.hstack((a, gamma)))
         theta2 = subproblem1(k2, p, c1)
         theta1 = -subproblem1(k1, q, c1)
         return [(theta1, theta2)]
     
-    cm=np.array([k1, k2, np.cross(k1,k2)]).transpose()
+    cm=np.array([k1, k2, np.cross(k1,k2)]).T
     c1 = np.dot(cm, np.hstack((a, gamma)))
     c2 = np.dot(cm, np.hstack((a, -gamma)))
     theta1_1 = -subproblem1(q, c1, k1)
@@ -614,10 +623,10 @@ def subproblem4(p, q, k, d):
     :rtype:  list of numbers
     :return: list of valid theta angles in radians    
     """
-    
-    c = np.subtract(d, (np.dot(p,q) + np.dot(p,hat(k)).dot(hat(k)).dot(q)))
+        
     a = np.dot(p,hat(k)).dot(q)
-    b = -np.dot(p, hat(k).dot(hat(k)).dot(q))
+    b = -np.dot(p, hat(k).dot(hat(k).dot(q)))
+    c = np.subtract(d, (np.dot(p,q) -b))
     
     phi = np.arctan2(b, a)
     
