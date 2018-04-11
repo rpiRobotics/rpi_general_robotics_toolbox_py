@@ -36,6 +36,12 @@ ey = np.array([0,1,0])
 ez = np.array([0,0,1])
 
 class normalize_joints(object):
+    
+    """
+    Internal use to help with joint limits, multiple revolutions,
+    and last joint angles
+    """
+    
     def __init__(self, robot, last_joints):
         self._lower_limit = robot.joint_lower_limit
         self._upper_limit = robot.joint_upper_limit
@@ -110,6 +116,26 @@ class normalize_joints(object):
         
   
 def robot6_sphericalwrist_invkin(robot, desired_pose, last_joints = None):
+    """
+    Inverse kinematics for six axis articulated industrial robots
+    with sherical wrists. Examples include Puma 260, ABB IRB6640, 
+    Staubli TX40, etc. Note that this is not for Universal Robot 
+    wrist configurations.
+    
+    :type    robot: general_robotics_toolbox.Robot
+    :param   robot: The robot object representing the geometry of the robot
+    :type    desired_pose: general_robotics_toolbox.Pose
+    :param   desired_pose: The desired pose of the robot
+    :type    last_joints: list, tuple, or numpy.array
+    :param   last_joints: The joints of the robot at the last timestep. The returned 
+             first returned joint configuration will be the closests to last_joints. Optional
+    :rtype:  list of numpy.array
+    :return: A list of zero or more joint angles that match the desired pose. An
+             empty list means that the desired pose cannot be reached. If last_joints
+             is specified, the first entry is the closest configuration to last_joints.    
+    """
+    
+    
     
     R06 = desired_pose.R
     p0T = desired_pose.p
