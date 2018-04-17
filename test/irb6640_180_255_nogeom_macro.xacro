@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="abb_irb6640_180_255" params="prefix">
+    <!-- link list -->
+    <link name="${prefix}base_link">  
+    </link>
+    <link name="${prefix}link_1">      
+    </link>
+    <link name="${prefix}link_2">  
+    </link>
+    <link name="${prefix}link_3">  
+    </link>
+    <link name="${prefix}link_4">     
+    </link>
+    <link name="${prefix}link_5">     
+    </link>
+    <link name="${prefix}link_6">  
+    </link>
+    <link name="${prefix}tool0"/>    
+    <!-- end of link list -->
+
+    <!-- joint list -->
+    <joint type="revolute" name="${prefix}joint_1">
+      <origin xyz="0 0 0.780" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}link_1"/>
+      <limit effort="0" lower="-2.967" upper="2.967" velocity="1.7453"/>
+    </joint>
+    <joint type="revolute" name="${prefix}joint_2">
+      <origin xyz="0.320 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <parent link="${prefix}link_1"/>
+      <child link="${prefix}link_2"/>
+      <limit effort="0" lower="-1.134" upper="1.4855" velocity="1.5707"/>
+    </joint>
+    <joint type="revolute" name="${prefix}joint_3">
+      <origin xyz="0 0 1.075" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <parent link="${prefix}link_2"/>
+      <child link="${prefix}link_3"/>
+      <limit effort="0" lower="-3.142" upper="1.222" velocity="1.5707"/>
+    </joint>
+    <joint type="revolute" name="${prefix}joint_4">
+      <origin xyz="0 0 0.2" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <parent link="${prefix}link_3"/>
+      <child link="${prefix}link_4"/>
+      <limit effort="0" lower="-5.236" upper="5.236" velocity="2.9671"/>
+    </joint>
+    <joint type="revolute" name="${prefix}joint_5">
+      <origin xyz="1.142 0 0 " rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <parent link="${prefix}link_4"/>
+      <child link="${prefix}link_5"/>
+      <limit effort="0" lower="-2.094" upper="2.094" velocity="2.4435"/>
+    </joint>
+    <joint type="revolute" name="${prefix}joint_6">
+      <origin xyz="0.2 0 0 " rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <parent link="${prefix}link_5"/>
+      <child link="${prefix}link_6"/>
+      <limit effort="0" lower="-6.283" upper="6.283" velocity="3.3161"/>
+    </joint>
+    <joint type="fixed" name="${prefix}joint_6-tool0">
+      <parent link="${prefix}link_6"/>
+      <child link="${prefix}tool0"/>
+      <origin xyz="0 0 0" rpy="0 1.57079632679 0"/>
+    </joint>
+    
+    <!-- end of joint list -->
+
+    <!-- ROS base_link to ABB World Coordinates transform -->
+    <link name="${prefix}base" />
+    <joint name="${prefix}base_link-base" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}base"/>
+    </joint>
+  </xacro:macro>
+</robot>

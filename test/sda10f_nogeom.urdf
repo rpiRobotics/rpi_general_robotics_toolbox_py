@@ -1,0 +1,154 @@
+<?xml version="1.0" ?>
+
+<!-- Based on ROS Industrial model https://github.com/ros-industrial/motoman -->
+
+<robot name="motoman_sda10f" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- link list -->
+  <link name="torso_base_link"/>    
+  <link name="torso_link_b1"/>    
+  <link name="torso_link_b2"/>   
+  <!-- joint list -->
+  <joint name="torso_joint_b1" type="revolute">
+    <parent link="torso_base_link"/>
+    <child link="torso_link_b1"/>
+    <origin rpy="0 0 0" xyz="0.09257 0 0.8835"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-2.9570" upper="2.9570" velocity="2.26"/>
+  </joint>
+  <joint name="torso_joint_b2" type="revolute">
+    <parent link="torso_base_link"/>
+    <child link="torso_link_b2"/>
+    <origin rpy="0 0 0" xyz="0.09257 0 0.8835"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" lower="-2.9570" upper="2.9570" velocity="2.26"/>
+    <mimic joint="torso_joint_b1" multiplier="1" offset="0"/>
+  </joint>
+  <!-- end of joint list -->
+  <link name="arm_left_link_1_s"/>  
+  <link name="arm_left_link_2_l"/>
+  <link name="arm_left_link_3_e"/>   
+  <link name="arm_left_link_4_u"/>    
+  <link name="arm_left_link_5_r"/>    
+  <link name="arm_left_link_6_b"/>
+  <link name="arm_left_link_7_t"/>    
+  <link name="arm_left_link_tool0"/>
+  <joint name="arm_left_joint_1_s" type="revolute">
+    <parent link="torso_link_b1"/>
+    <child link="arm_left_link_1_s"/>
+    <origin rpy="1.57 0 0.0" xyz="0.09996 0.0275 0.32214"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="0" lower="-3.13" upper="3.13" velocity="2.95"/>
+  </joint>
+  <joint name="arm_left_joint_2_l" type="revolute">
+    <parent link="arm_left_link_1_s"/>
+    <child link="arm_left_link_2_l"/>
+    <origin rpy="-1.57 0 0" xyz="0 0.0577 -0.2255"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="0" lower="-1.90" upper="1.90" velocity="2.95"/>
+  </joint>
+  <joint name="arm_left_joint_3_e" type="revolute">
+    <parent link="arm_left_link_2_l"/>
+    <child link="arm_left_link_3_e"/>
+    <origin rpy="1.57 0 0" xyz="0 0.1690 -0.0454"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="0" lower="-2.95" upper="2.95" velocity="2.95"/>
+  </joint>
+  <joint name="arm_left_joint_4_u" type="revolute">
+    <parent link="arm_left_link_3_e"/>
+    <child link="arm_left_link_4_u"/>
+    <origin rpy="-1.57 0 0" xyz="0 -0.0085 -0.181"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-2.36" upper="2.36" velocity="2.95"/>
+  </joint>
+  <joint name="arm_left_joint_5_r" type="revolute">
+    <parent link="arm_left_link_4_u"/>
+    <child link="arm_left_link_5_r"/>
+    <origin rpy="1.57 0 0" xyz="0 0.1936 0.0155"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-3.13" upper="3.13" velocity="3.48"/>
+  </joint>
+  <joint name="arm_left_joint_6_b" type="revolute">
+    <parent link="arm_left_link_5_r"/>
+    <child link="arm_left_link_6_b"/>
+    <origin rpy="-1.57 0 0" xyz="0 0.0080 -0.155"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-1.90" upper="1.90" velocity="3.48"/>
+  </joint>
+  <joint name="arm_left_joint_7_t" type="revolute">
+    <parent link="arm_left_link_6_b"/>
+    <child link="arm_left_link_7_t"/>
+    <origin rpy="1.57 0 0" xyz="0 0.168 -0.015"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="0" lower="-3.13" upper="3.13" velocity="6.97"/>
+  </joint>
+  <joint name="arm_left_joint_tool0" type="fixed">
+    <origin rpy="0 0 -3.13" xyz="0 0 0.0"/>
+    <parent link="arm_left_link_7_t"/>
+    <child link="arm_left_link_tool0"/>
+  </joint>
+  <!-- end of joint list -->
+  <link name="arm_right_link_1_s"/>    
+  <link name="arm_right_link_2_l"/>    
+  <link name="arm_right_link_3_e"/>    
+  <link name="arm_right_link_4_u"/>
+  <link name="arm_right_link_5_r"/>    
+  <link name="arm_right_link_6_b"/>    
+  <link name="arm_right_link_7_t"/>   
+  <link name="arm_right_link_tool0"/>
+  <joint name="arm_right_joint_1_s" type="revolute">
+    <parent link="torso_link_b1"/>
+    <child link="arm_right_link_1_s"/>
+    <origin rpy="1.57 0 -3.14" xyz="0.09996 -0.0275 0.32214"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-3.13" upper="3.13" velocity="2.95"/>
+  </joint>
+  <joint name="arm_right_joint_2_l" type="revolute">
+    <parent link="arm_right_link_1_s"/>
+    <child link="arm_right_link_2_l"/>
+    <origin rpy="-1.57 0 0" xyz="0 0.0577 -0.2255"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-1.90" upper="1.90" velocity="2.95"/>
+  </joint>
+  <joint name="arm_right_joint_3_e" type="revolute">
+    <parent link="arm_right_link_2_l"/>
+    <child link="arm_right_link_3_e"/>
+    <origin rpy="1.57 0 0" xyz="0 0.1690 -0.0454"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-2.95" upper="2.95" velocity="2.95"/>
+  </joint>
+  <joint name="arm_right_joint_4_u" type="revolute">
+    <parent link="arm_right_link_3_e"/>
+    <child link="arm_right_link_4_u"/>
+    <origin rpy="-1.57 0 0" xyz="0 -0.0085 -0.181"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="0" lower="-2.36" upper="2.36" velocity="2.95"/>
+  </joint>
+  <joint name="arm_right_joint_5_r" type="revolute">
+    <parent link="arm_right_link_4_u"/>
+    <child link="arm_right_link_5_r"/>
+    <origin rpy="1.57 0 0" xyz="0 0.1936 0.0155"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="0" lower="-3.13" upper="3.13" velocity="3.48"/>
+  </joint>
+  <joint name="arm_right_joint_6_b" type="revolute">
+    <parent link="arm_right_link_5_r"/>
+    <child link="arm_right_link_6_b"/>
+    <origin rpy="-1.57 0 0" xyz="0 0.0080 -0.155"/>
+    <axis xyz="0 0 -1"/>
+    <limit effort="0" lower="-1.90" upper="1.90" velocity="3.48"/>
+  </joint>
+  <joint name="arm_right_joint_7_t" type="revolute">
+    <parent link="arm_right_link_6_b"/>
+    <child link="arm_right_link_7_t"/>
+    <origin rpy="1.57 0 0" xyz="0 0.168 -0.015"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-3.13" upper="3.13" velocity="6.97"/>
+  </joint>
+  <joint name="arm_right_joint_tool0" type="fixed">
+    <origin rpy="0 0 -3.13" xyz="0 0 0.0"/>
+    <parent link="arm_right_link_7_t"/>
+    <child link="arm_right_link_tool0"/>
+  </joint>
+  <!-- end of joint list -->
+</robot>
+
