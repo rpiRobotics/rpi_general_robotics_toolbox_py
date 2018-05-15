@@ -75,6 +75,9 @@ def robot_from_xml_string(xml_string, root_link = None, tip_link = None):
     """    
     
     urdf_robot = URDF.from_xml_string(xml_string)
+    return _robot_from_urdf_robot(urdf_robot, root_link, tip_link)
+    
+def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
     
     if root_link is not None:
         assert root_link in urdf_robot.link_map, "Invalid root_link specified"
@@ -199,3 +202,27 @@ def robot_from_xacro_file(fname, package = None, root_link = None, tip_link = No
     """
     xml_string = _load_xacro_to_string(fname, package)
     return robot_from_xml_string(xml_string, root_link, tip_link)
+
+def robot_from_parameter_server(key='robot_description', root_link = None, tip_link = None):    
+    """
+    Loads a Robot class from the ROS parameter server. The joints, dimensions, and various 
+    limits will be extracted from the URDF data. Inertial properties and other URDF concepts 
+    are not currently supported. Use the root_link and tip_link to specify the root and tip 
+    of a robot if more than one robot is in the file.
+    
+    :type  key: str
+    :param key: The ROS parameter server key. Defaults to 'robot_description'. Optional
+    :type  root_link: str
+    :param root_link: The name of the root link (base link) of the robot. If None,
+                      this will be determined automatically. Optional
+    :type  tip_link: The name of the tip link (tool link) of the robot. If None,
+                     this will be determined automatically. Must be specified
+                     if more than one robot is specified in the URDF. Optional
+    :rtype:  general_robotics_toolbox.Robot
+    :return: The populated Robot class    
+    """
+       
+    urdf_robot = URDF.from_parameter_server(key)
+    return _robot_from_urdf_robot(urdf_robot, root_link, tip_link)   
+    
+    
