@@ -224,7 +224,7 @@ class Robot(object):
     """
     
     
-    def __init__(self, H, P, joint_type, joint_lower_limit = None, joint_upper_limit = None, joint_vel_limit = None, joint_acc_limit = None, M = None):
+    def __init__(self, H, P, joint_type, joint_lower_limit = None, joint_upper_limit = None, joint_vel_limit = None, joint_acc_limit = None, M = None, R_tool=None, p_tool=None):
         
         """
         Construct a Robot object holding the kinematic information for a single chain robot
@@ -245,6 +245,10 @@ class Robot(object):
         :param joint_acc_limit: A list of N numbers containing the joint acceleration limits. Optional
         :type  M: list of numpy.array
         :param M: A list of N, 6 x 6 spatial inertia matrices for the links. Optional
+        :type  R_tool: numpy.array
+        :param R_tool: A 3 x 3 rotation matrix for the tool frame. Optional
+        :type  p_tool: numpy.array
+        :param p_tool: A 3 x 1 vector for the tool frame. Optional
     
         """
         
@@ -286,6 +290,13 @@ class Robot(object):
             self.M = M
         else:
             self.M=None
+        
+        if R_tool is not None and p_tool is not None:
+            self.R_tool = R_tool
+            self.p_tool = p_tool
+        else:
+            self.R_tool = None
+            self.p_tool = None        
         
         self.H = H
         self.P = P
@@ -356,6 +367,13 @@ def fwdkin(robot, theta):
         elif (robot.joint_type[i] == 1 or robot.joint_type[i] == 3):
             p = p + theta[i] * R.dot(robot.H[:,[i]])
         p = p + R.dot(robot.P[:,[i+1]])
+        
+    p=np.reshape(p,(3,))
+        
+    if robot.R_tool is not None and robot.p_tool is not None:
+        p = p + R.dot(robot.p_tool)
+        R = R.dot(robot.R_tool)  
+    
     return Pose(R, p)
 
     
@@ -399,6 +417,10 @@ def robotjacobian(robot, theta):
         hi[:,[i]] = R.dot(H[:,[i]])
     
     pOT = pOi[:,[len(joint_type)]]
+    
+    if robot.p_tool is not None:
+        pOT += R.dot(robot.p_tool)
+    
     J = np.zeros([6,len(joint_type)])
     i = 0
     j = 0

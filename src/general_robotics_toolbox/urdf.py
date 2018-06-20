@@ -145,9 +145,16 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
         joint_vel_limit = None
     else:
         joint_vel_limit = np.array(joint_vel_limit)
-            
+    
+    if np.allclose(np.zeros((3,3)), R, atol=1e-5):
+        R_tool = None
+        p_tool = None
+    else:
+        R_tool = R
+        p_tool = np.zeros((3,))             
+    
     robot = rox.Robot(H, P, joint_type, joint_lower_limit, joint_upper_limit, \
-                        joint_vel_limit)
+                        joint_vel_limit, R_tool=R_tool, p_tool=p_tool)
     
     return robot
     

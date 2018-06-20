@@ -140,6 +140,10 @@ def robot6_sphericalwrist_invkin(robot, desired_pose, last_joints = None):
     R06 = desired_pose.R
     p0T = desired_pose.p
     
+    if robot.R_tool is not None and robot.p_tool is not None:
+        R06 = R06.dot(np.transpose(robot.R_tool))
+        p0T = p0T - R06.dot(robot.p_tool)
+    
     H = robot.H
     P = robot.P
     

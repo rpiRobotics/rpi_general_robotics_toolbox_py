@@ -22,6 +22,8 @@ class Test_irb6640(unittest.TestCase):
         np.testing.assert_allclose(robot.joint_lower_limit, np.array([-2.967,-1.134,-3.142,-5.236,-2.094,-6.283]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_upper_limit, np.array([2.967,1.4855,1.222,5.236,2.094,6.283]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_vel_limit, np.array([1.7453,1.5707,1.5707,2.9671,2.4435,3.3161]), atol=1e-4)
+        np.testing.assert_allclose(robot.R_tool, np.array([[0,0,1], [0,1,0], [-1,0,0]]), atol=1e-4)
+        np.testing.assert_allclose(robot.p_tool, [0,0,0], atol=1e-4)
     
 class Test_sda10f(unittest.TestCase):
     
@@ -36,21 +38,24 @@ class Test_sda10f(unittest.TestCase):
         self.assert_right_robot(right_robot)
     
     def assert_left_robot(self, robot):
-        np.testing.assert_allclose(robot.H, np.array([[0.,0.,0.,0.,0.,0.,0.,0.],[0.,1.,0.,1.,0.,-1.,0.,1.],[1.,-0.0008,-1.,-0.0008,1.,0.0008,1.,-0.0008]]), atol=1e-4)
-        np.testing.assert_allclose(robot.P, np.array([[0.0926,0.1,0.,0.,0.,0.,0.,0.,0.],[0.,0.0275,0.2255,0.169,0.181,0.1936,0.155,0.168,0.],[0.8835,0.3221,0.0575,-0.0454,-0.0086,0.0155,0.0079,-0.015,0.]]), atol=1e-4)
+        np.testing.assert_allclose(robot.H, np.array([[0.,0.,0.,0.,0.,0.,0.,0.],[0.,1.,0.,1.,0.,-1.,0.,1.],[1.,0,-1.,0.,1.,0.,1.,0.]]), atol=1e-4)
+        np.testing.assert_allclose(robot.P, np.array([[0.0926,0.0999,0.,0.,0.,0.,0.,0.,0.],[0.,0.0275,0.2255,0.169,0.181,0.1936,0.155,0.168,0.],[0.8835,0.3221,0.0577,-0.0454,-0.0085,0.0155,0.008,-0.015,0.]]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_type, np.array([0.,0.,0.,0.,0.,0.,0.,0.]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_lower_limit, np.array([-2.957,-3.13,-1.9,-2.95,-2.36,-3.13,-1.9,-3.13]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_upper_limit, np.array([2.957,3.13,1.9,2.95,2.36,3.13,1.9,3.13]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_vel_limit, np.array([2.26,2.95,2.95,2.95,2.95,3.48,3.48,6.97]), atol=1e-4)
+        np.testing.assert_allclose(robot.R_tool, np.array([[-1,0,0],[0,0,-1],[0,-1,0]]), atol=1e-4)
+        np.testing.assert_allclose(robot.p_tool, np.zeros((3,)), atol=1e-4)
 
     def assert_right_robot(self, robot):
-        np.testing.assert_allclose(robot.H, np.array([[-0.0016,0.,-0.0016,0.,0.0016,0.,-0.0016],[1.,0.,1.,0.,-1.,0.,1.],[0.0008,1.,0.0008,-1.,-0.0008,-1.,0.0008]]), atol=1e-4)
-        np.testing.assert_allclose(robot.P, np.array([[0.1,0.0004,0.0003,0.0003,0.0003,0.0002,0.0003,0.],[-0.0275,-0.2255,-0.169,-0.181,-0.1936,-0.155,-0.168,0.],[0.3221,0.0575,-0.0454,-0.0086,0.0155,0.0079,-0.015,0.]]), atol=1e-4)
+        np.testing.assert_allclose(robot.H, np.array([[0.,0.,0.,0.,0.,0.,0.],[1.,0.,1.,0.,-1.,0.,1.],[0.,1.,0.,-1.,0.,-1.,0.]]), atol=1e-4)
+        np.testing.assert_allclose(robot.P, np.array([[0.1,0.,0.,0.,0.,0.,0.,0.],[-0.0275,-0.2255,-0.169,-0.181,-0.1936,-0.155,-0.168,0.],[0.3221,0.0577,-0.0454,-0.0085,0.0155,0.008,-0.015,0.]]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_type, np.array([0.,0.,0.,0.,0.,0.,0.]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_lower_limit, np.array([-3.13,-1.9,-2.95,-2.36,-3.13,-1.9,-3.13]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_upper_limit, np.array([3.13,1.9,2.95,2.36,3.13,1.9,3.13]), atol=1e-4)
         np.testing.assert_allclose(robot.joint_vel_limit, np.array([2.95,2.95,2.95,2.95,3.48,3.48,6.97]), atol=1e-4)
-
+        np.testing.assert_allclose(robot.R_tool, np.array([[1,0,0],[0,0,1],[0,-1,0]]), atol=1e-4)
+        np.testing.assert_allclose(robot.p_tool, np.zeros((3,)), atol=1e-4)
     
 class URDFLoaderTestSuite(unittest.TestSuite):
     def __init__(self):

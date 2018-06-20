@@ -35,54 +35,54 @@
   <joint name="arm_left_joint_1_s" type="revolute">
     <parent link="torso_link_b1"/>
     <child link="arm_left_link_1_s"/>
-    <origin rpy="1.57 0 0.0" xyz="0.09996 0.0275 0.32214"/>
+    <origin rpy="1.57079632679 0 0.0" xyz="0.09996 0.0275 0.32214"/>
     <axis xyz="0 0 -1"/>
     <limit effort="0" lower="-3.13" upper="3.13" velocity="2.95"/>
   </joint>
   <joint name="arm_left_joint_2_l" type="revolute">
     <parent link="arm_left_link_1_s"/>
     <child link="arm_left_link_2_l"/>
-    <origin rpy="-1.57 0 0" xyz="0 0.0577 -0.2255"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0 0.0577 -0.2255"/>
     <axis xyz="0 0 -1"/>
     <limit effort="0" lower="-1.90" upper="1.90" velocity="2.95"/>
   </joint>
   <joint name="arm_left_joint_3_e" type="revolute">
     <parent link="arm_left_link_2_l"/>
     <child link="arm_left_link_3_e"/>
-    <origin rpy="1.57 0 0" xyz="0 0.1690 -0.0454"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 0.1690 -0.0454"/>
     <axis xyz="0 0 -1"/>
     <limit effort="0" lower="-2.95" upper="2.95" velocity="2.95"/>
   </joint>
   <joint name="arm_left_joint_4_u" type="revolute">
     <parent link="arm_left_link_3_e"/>
     <child link="arm_left_link_4_u"/>
-    <origin rpy="-1.57 0 0" xyz="0 -0.0085 -0.181"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0 -0.0085 -0.181"/>
     <axis xyz="0 0 1"/>
     <limit effort="0" lower="-2.36" upper="2.36" velocity="2.95"/>
   </joint>
   <joint name="arm_left_joint_5_r" type="revolute">
     <parent link="arm_left_link_4_u"/>
     <child link="arm_left_link_5_r"/>
-    <origin rpy="1.57 0 0" xyz="0 0.1936 0.0155"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 0.1936 0.0155"/>
     <axis xyz="0 0 1"/>
     <limit effort="0" lower="-3.13" upper="3.13" velocity="3.48"/>
   </joint>
   <joint name="arm_left_joint_6_b" type="revolute">
     <parent link="arm_left_link_5_r"/>
     <child link="arm_left_link_6_b"/>
-    <origin rpy="-1.57 0 0" xyz="0 0.0080 -0.155"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0 0.0080 -0.155"/>
     <axis xyz="0 0 1"/>
     <limit effort="0" lower="-1.90" upper="1.90" velocity="3.48"/>
   </joint>
   <joint name="arm_left_joint_7_t" type="revolute">
     <parent link="arm_left_link_6_b"/>
     <child link="arm_left_link_7_t"/>
-    <origin rpy="1.57 0 0" xyz="0 0.168 -0.015"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 0.168 -0.015"/>
     <axis xyz="0 0 -1"/>
     <limit effort="0" lower="-3.13" upper="3.13" velocity="6.97"/>
   </joint>
   <joint name="arm_left_joint_tool0" type="fixed">
-    <origin rpy="0 0 -3.13" xyz="0 0 0.0"/>
+    <origin rpy="0 0 -3.14159265358" xyz="0 0 0.0"/>
     <parent link="arm_left_link_7_t"/>
     <child link="arm_left_link_tool0"/>
   </joint>
@@ -98,54 +98,54 @@
   <joint name="arm_right_joint_1_s" type="revolute">
     <parent link="torso_link_b1"/>
     <child link="arm_right_link_1_s"/>
-    <origin rpy="1.57 0 -3.14" xyz="0.09996 -0.0275 0.32214"/>
+    <origin rpy="1.57079632679 0 -3.14159265358" xyz="0.09996 -0.0275 0.32214"/>
     <axis xyz="0 0 1"/>
     <limit effort="0" lower="-3.13" upper="3.13" velocity="2.95"/>
   </joint>
   <joint name="arm_right_joint_2_l" type="revolute">
     <parent link="arm_right_link_1_s"/>
     <child link="arm_right_link_2_l"/>
-    <origin rpy="-1.57 0 0" xyz="0 0.0577 -0.2255"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0 0.0577 -0.2255"/>
     <axis xyz="0 0 1"/>
     <limit effort="0" lower="-1.90" upper="1.90" velocity="2.95"/>
   </joint>
   <joint name="arm_right_joint_3_e" type="revolute">
     <parent link="arm_right_link_2_l"/>
     <child link="arm_right_link_3_e"/>
-    <origin rpy="1.57 0 0" xyz="0 0.1690 -0.0454"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 0.1690 -0.0454"/>
     <axis xyz="0 0 1"/>
     <limit effort="0" lower="-2.95" upper="2.95" velocity="2.95"/>
   </joint>
   <joint name="arm_right_joint_4_u" type="revolute">
     <parent link="arm_right_link_3_e"/>
     <child link="arm_right_link_4_u"/>
-    <origin rpy="-1.57 0 0" xyz="0 -0.0085 -0.181"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0 -0.0085 -0.181"/>
     <axis xyz="0 0 -1"/>
     <limit effort="0" lower="-2.36" upper="2.36" velocity="2.95"/>
   </joint>
   <joint name="arm_right_joint_5_r" type="revolute">
     <parent link="arm_right_link_4_u"/>
     <child link="arm_right_link_5_r"/>
-    <origin rpy="1.57 0 0" xyz="0 0.1936 0.0155"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 0.1936 0.0155"/>
     <axis xyz="0 0 -1"/>
     <limit effort="0" lower="-3.13" upper="3.13" velocity="3.48"/>
   </joint>
   <joint name="arm_right_joint_6_b" type="revolute">
     <parent link="arm_right_link_5_r"/>
     <child link="arm_right_link_6_b"/>
-    <origin rpy="-1.57 0 0" xyz="0 0.0080 -0.155"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0 0.0080 -0.155"/>
     <axis xyz="0 0 -1"/>
     <limit effort="0" lower="-1.90" upper="1.90" velocity="3.48"/>
   </joint>
   <joint name="arm_right_joint_7_t" type="revolute">
     <parent link="arm_right_link_6_b"/>
     <child link="arm_right_link_7_t"/>
-    <origin rpy="1.57 0 0" xyz="0 0.168 -0.015"/>
+    <origin rpy="1.57079632679 0 0" xyz="0 0.168 -0.015"/>
     <axis xyz="0 0 1"/>
     <limit effort="0" lower="-3.13" upper="3.13" velocity="6.97"/>
   </joint>
   <joint name="arm_right_joint_tool0" type="fixed">
-    <origin rpy="0 0 -3.13" xyz="0 0 0.0"/>
+    <origin rpy="0 0 -3.14159265358" xyz="0 0 0.0"/>
     <parent link="arm_right_link_7_t"/>
     <child link="arm_right_link_tool0"/>
   </joint>

@@ -144,6 +144,18 @@ class Test_fwdkin(unittest.TestCase):
         np.testing.assert_allclose(pose3.R, pose3_R_t, atol=1e-4)
         np.testing.assert_allclose(pose3.p, pose3_p_t, atol=1e-4)
         
+        puma_tool=puma260b_robot_tool()
+        
+        pose4=rox.fwdkin(puma_tool, joints3)
+        pose4_R_t=np.array([[0.4076, 0.8069, 0.4274],\
+                            [0.6817, -0.5804,0.4455], \
+                            [0.6076, 0.1097, -0.7866]])
+        
+        pose4_p_t=[0.2450, 0.0916, 0.3872]
+        
+        np.testing.assert_allclose(pose4.R, pose4_R_t, atol=1e-4)
+        np.testing.assert_allclose(pose4.p, pose4_p_t, atol=1e-4)
+        
 class Test_robotjacobian(unittest.TestCase):
     
     def runTest(self):
@@ -248,6 +260,7 @@ class Test_robot6_sphericalwrist_invkin(unittest.TestCase):
         
         robot1=puma260b_robot()
         robot2=abb_irb6640_180_255_robot()
+        robot3=puma260b_robot_tool()
         
         def _test_configuration(robot, theta):
             
@@ -278,7 +291,7 @@ class Test_robot6_sphericalwrist_invkin(unittest.TestCase):
         #Previous failed value, add to unit test
         assert _test_configuration(robot2, [-0.09550528, -0.43532822, -2.35369965, -2.42324955, -1.83659391, -4.00786639])    
         
-        for robot in (robot1,robot2):        
+        for robot in (robot1,robot2,robot3):
             for _ in xrange(100):
                 theta = np.random.rand(6)*(robot.joint_upper_limit - robot.joint_lower_limit) \
                    + robot.joint_lower_limit
@@ -289,7 +302,7 @@ class Test_robot6_sphericalwrist_invkin(unittest.TestCase):
         assert _test_last_configuration(robot1, theta_test1, theta_test1 + np.deg2rad(4))
         assert _test_last_configuration(robot2, theta_test1 - np.deg2rad(4), np.array([0,0,0,0,0,np.pi*2]))
                         
-        for robot in (robot1,robot2):        
+        for robot in (robot1,robot2,robot3):
             for _ in xrange(100):
                 theta = np.random.rand(6)*(robot.joint_upper_limit - robot.joint_lower_limit - np.deg2rad(30)) \
                    + robot.joint_lower_limit + np.deg2rad(15)
@@ -314,6 +327,12 @@ def puma260b_robot():
     
     return rox.Robot(H, P, joint_type, joint_min, joint_max)    
     
+def puma260b_robot_tool():
+    
+    robot=puma260b_robot()
+    robot.R_tool=rox.rot([0,1,0], np.pi/2.0)
+    robot.p_tool=[0.05, 0, 0]
+    return robot
     
 def abb_irb6640_180_255_robot():
     """Return a Robot instance for the ABB IRB6640 180-255 robot"""
@@ -329,7 +348,10 @@ def abb_irb6640_180_255_robot():
     joint_min=np.deg2rad(np.array([-170, -65, -180, -300, -120, -360]))
     joint_max=np.deg2rad(np.array([170,  85, 70,  300,  120,  360]))
     
-    return rox.Robot(H, P, joint_type, joint_min, joint_max) 
+    p_tool=np.array([0,0,0])
+    R_tool=rox.rot([0,1,0], np.pi/2.0)
+    
+    return rox.Robot(H, P, joint_type, joint_min, joint_max, R_tool=R_tool, p_tool=p_tool) 
     
     
 class GeneralRoboticsToolboxTestSuite(unittest.TestSuite):
