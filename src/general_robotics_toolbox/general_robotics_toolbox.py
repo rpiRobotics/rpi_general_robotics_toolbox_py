@@ -125,29 +125,29 @@ def R2q(R):
     tr = np.trace(R)
     if tr > 0:
         S = 2*math.sqrt(tr + 1)
-        q = np.array([[0.25*S], \
-                      [(R[2,1] - R[1,2]) / S], \
-                      [(R[0,2] - R[2,0]) / S], \
-                      [(R[1,0] - R[0,1]) / S]])
+        q = np.array([(0.25*S), \
+                      ((R[2,1] - R[1,2]) / S), \
+                      ((R[0,2] - R[2,0]) / S), \
+                      ((R[1,0] - R[0,1]) / S)])
                       
     elif (R[0,0] > R[1,1] and R[0,0] > R[2,2]):
         S = 2*math.sqrt(1 + R[0,0] - R[1,1] - R[2,2])
-        q = np.array([[(R[2,1] - R[1,2]) / S], \
-                      [0.25*S], \
-                      [(R[0,1] + R[1,0]) / S], \
-                      [(R[0,2] + R[2,0]) / S]])
+        q = np.array([((R[2,1] - R[1,2]) / S), \
+                      (0.25*S), \
+                      ((R[0,1] + R[1,0]) / S), \
+                      ((R[0,2] + R[2,0]) / S)])
     elif (R[1,1] > R[2,2]):
         S = 2*math.sqrt(1 - R[0,0] + R[1,1] - R[2,2])
-        q = np.array([[(R[0,2] - R[2,0]) / S], \
-                      [(R[0,1] + R[1,0]) / S], \
-                      [0.25*S], \
-                      [(R[1,2] + R[2,1]) / S]])
+        q = np.array([((R[0,2] - R[2,0]) / S), \
+                      ((R[0,1] + R[1,0]) / S), \
+                      (0.25*S), \
+                      ((R[1,2] + R[2,1]) / S)])
     else:
         S = 2*math.sqrt(1 - R[0,0] - R[1,1] + R[2,2])
-        q = np.array([[(R[1,0] - R[0,1]) / S], \
-                      [(R[0,2] + R[2,0]) / S], \
-                      [(R[1,2] + R[2,1]) / S], \
-                      [0.25*S]])
+        q = np.array([((R[1,0] - R[0,1]) / S), \
+                      ((R[0,2] + R[2,0]) / S), \
+                      ((R[1,2] + R[2,1]) / S), \
+                      (0.25*S)])
     return q
 
 def quatcomplement(q):
@@ -323,11 +323,11 @@ class Pose(object):
         :param p: The 3 x 1 position vector
         """    
                 
-        assert (R.shape == (3,3))
-        assert (p.shape == (3,) or p.shape ==(3,1))
+        assert (np.shape(R) == (3,3))
+        assert (np.shape(p) == (3,) or np.shape(p) ==(3,1))
         
-        self.R=R
-        self.p=p.reshape((3,))
+        self.R=np.array(R)
+        self.p=np.reshape(p,(3,))
         
     def __mul__(self, other):
         R = np.dot(self.R, other.R)

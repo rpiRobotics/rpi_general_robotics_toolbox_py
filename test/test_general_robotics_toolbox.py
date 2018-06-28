@@ -63,7 +63,7 @@ class Test_R2q(unittest.TestCase):
                       [0.6456962,-0.7139224,0.2709081], \
                       [0.5720833,0.6872731,0.4476342]])
         
-        q_t=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).T
+        q_t=np.array([0.2387194, 0.4360402, 0.2933459, 0.8165967])
         q=rox.R2q(rot)
         np.testing.assert_allclose(q_t, q, atol=1e-6)
      
@@ -74,7 +74,7 @@ class Test_q2R(unittest.TestCase):
                       [0.6456962,-0.7139224,0.2709081], \
                       [0.5720833,0.6872731,0.4476342]])
         
-        q=np.array([[ 0.2387194, 0.4360402, 0.2933459, 0.8165967]]).T
+        q=np.array([0.2387194, 0.4360402, 0.2933459, 0.8165967])
         rot=rox.q2R(q)
         np.testing.assert_allclose(rot, rot_t, atol=1e-6)
 
