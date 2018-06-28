@@ -196,3 +196,4 @@ include_directories(
 ## Add folders to be run by python nosetests
 catkin_add_nosetests(test/test_general_robotics_toolbox.py)
 catkin_add_nosetests(test/test_urdf_loader.py)
+catkin_add_nosetests(test/test_ros_msg.py)

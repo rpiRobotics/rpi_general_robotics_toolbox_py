@@ -96,7 +96,7 @@ class Test_quatproduct(unittest.TestCase):
         R_t=rox.q2R(q_1).dot(rox.q2R(q_2))
         q_t=rox.R2q(R_t)
         
-        q = rox.quatproduct(q_1).dot(q_2).reshape(4,1)
+        q = rox.quatproduct(q_1).dot(q_2).reshape((4,))
                         
         np.testing.assert_allclose(q, q_t, atol=1e-6)
         
