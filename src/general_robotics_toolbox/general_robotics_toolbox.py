@@ -419,7 +419,7 @@ def robotjacobian(robot, theta):
     pOT = pOi[:,[len(joint_type)]]
     
     if robot.p_tool is not None:
-        pOT += R.dot(robot.p_tool)
+        pOT += R.dot(np.reshape(robot.p_tool,(3,1)))
     
     J = np.zeros([6,len(joint_type)])
     i = 0
