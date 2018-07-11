@@ -340,7 +340,12 @@ class Pose(object):
             and np.all(np.isclose(self.p, other.p, 1e-6))
             
     def __neq__(self, other):
-        return not self.__eq__(other) 
+        return not self.__eq__(other)
+    
+    def inv(self):
+        R=np.transpose(self.R)
+        p=-np.dot(R,self.p)
+        return Pose(R,p)
     
 def fwdkin(robot, theta):
     """
