@@ -88,6 +88,8 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
     for l1 in filter(lambda l: l not in urdf_robot.child_map, urdf_robot.link_map):
         try:
             chain = urdf_robot.get_chain(root_link, l1, True, False, True)
+            if any(map(lambda c: urdf_robot.joint_map[c].joint_type == 'floating', chain)):
+                continue
             if all(map(lambda c: urdf_robot.joint_map[c].joint_type == 'fixed', chain)):
                 continue
             tip_links.append(l1)
@@ -132,7 +134,7 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
                 joint_vel_limit[i] = j.limit.velocity
             i += 1            
         else:        
-            assert False, "Only revolute, prismatic, and fixed joints supported"
+            assert False, "Only revolute, prismatic, fixed, and floating joints supported"
     
     if None in joint_lower_limit or None in joint_upper_limit:
         joint_lower_limit = None
