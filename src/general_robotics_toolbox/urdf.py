@@ -85,6 +85,8 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
         root_link = urdf_robot.get_root()
     tip_links = []
     
+    valid_chains=[]
+    
     for l1 in filter(lambda l: l not in urdf_robot.child_map, urdf_robot.link_map):
         try:
             chain = urdf_robot.get_chain(root_link, l1, True, False, True)
@@ -93,16 +95,16 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
             if all(map(lambda c: urdf_robot.joint_map[c].joint_type == 'fixed', chain)):
                 continue
             tip_links.append(l1)
+            valid_chains.append(chain)
         except KeyError:
             pass
     
-    if tip_link is not None:
-        assert tip_link in tip_links, "Invalid tip_link specified"
-    else:    
+    if tip_link is None:    
         assert len(tip_links) == 1, "Multiple robots detected, specify tip link of desired robot"
         tip_link = tip_links[0]
                 
     chain = urdf_robot.get_chain(root_link, tip_link, True, False, True)
+    assert len(chain) > 0, "Invalid robot chain found"        
         
     n = len(filter(lambda c: urdf_robot.joint_map[c].joint_type != 'fixed', chain))
     P = np.zeros((3, n+1))
