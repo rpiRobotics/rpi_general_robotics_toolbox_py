@@ -124,7 +124,7 @@ def robot6_sphericalwrist_invkin(robot, desired_pose, last_joints = None):
     
     :type    robot: general_robotics_toolbox.Robot
     :param   robot: The robot object representing the geometry of the robot
-    :type    desired_pose: general_robotics_toolbox.Pose
+    :type    desired_pose: general_robotics_toolbox.Transform
     :param   desired_pose: The desired pose of the robot
     :type    last_joints: list, tuple, or numpy.array
     :param   last_joints: The joints of the robot at the last timestep. The returned 

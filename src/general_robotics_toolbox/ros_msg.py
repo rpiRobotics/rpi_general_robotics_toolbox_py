@@ -28,7 +28,8 @@
 
 from __future__ import absolute_import
 
-from geometry_msgs.msg import Quaternion, Point, Vector3, Pose, Twist, Wrench
+from geometry_msgs.msg import Quaternion, Point, Vector3, Pose, Twist, Wrench, \
+ Transform, TransformStamped, PoseStamped
 from . import general_robotics_toolbox as rox
 import numpy as np
 
@@ -80,7 +81,30 @@ def R2msg(R):
     """
     return q2msg(rox.R2q(R))
 
-def msg2p(ros_point):
+def msg2p(ros_vector3):
+    """
+    Converts a geometry_msgs/Vector3 message into a 3x1 vector
+    
+    :type ros_vector3: geometry_msgs.msg.Vector3
+    :param ros_vector3: ROS Vector3 message
+    :rtype: numpy.array
+    :return The 3x1 point vector
+    """
+    return np.array([ros_vector3.x, ros_vector3.y, ros_vector3.z])
+
+def p2msg(p):
+    """
+    Converts a 3x1 point vector into a geometry_msgs/Vector3 message
+    
+    :type p: numpy.array
+    :param p: 3x1 point matrix
+    :rtype: geometry_msgs.msg.Point
+    :return The ROS Point message
+    """
+    p2=np.reshape(p, (3,))
+    return Vector3(p2[0], p2[1], p2[2])
+
+def point_msg2p(ros_point):
     """
     Converts a geometry_msgs/Point message into a 3x1 vector
     
@@ -91,7 +115,7 @@ def msg2p(ros_point):
     """
     return np.array([ros_point.x, ros_point.y, ros_point.z])
 
-def p2msg(p):
+def p2point_msg(p):
     """
     Converts a 3x1 point vector into a geometry_msgs/Point message
     
@@ -103,29 +127,96 @@ def p2msg(p):
     p2=np.reshape(p, (3,))
     return Point(p2[0], p2[1], p2[2])
 
-def msg2pose(ros_pose):
+def msg2transform(ros_transform):
     """
     Converts a geometry_msgs/Pose message into a general_robotics_toolbox.Pose
     
-    :type ros_pose: geometry_msgs.msg.Pose
-    :param ros_pose: ROS Pose message
+    :type ros_transform: geometry_msgs.msg.Transform, geometry_msgs.msg.Pose, 
+          geometry_msgs.msg.TransformStamped, or geometry_msgs.msg.PoseStamped
+    :param ros_transform: ROS Transform, Pose, TransformStamped, or PoseStamped message
     :rtype: general_robotics_toolbox.Pose
     :return The Pose class instance
     """
-    R=msg2R(ros_pose.orientation)
-    p=msg2p(ros_pose.position)
-    return rox.Pose(R,p)
-
-def pose2msg(pose):
-    """
-    Converts a general_robotics_toolbox.Pose into a geometry_msgs/Pose message
     
-    :type pose: general_robotics_toolbox.Pose
-    :param pose: general_robotics_toolbox.Pose class instance
+    if hasattr(ros_transform, 'translation') and hasattr(ros_transform, 'rotation'):
+        #geometry_msgs/Transform
+        R=msg2R(ros_transform.rotation)
+        p=msg2p(ros_transform.translation)
+        return rox.Transform(R,p)
+    elif hasattr(ros_transform, 'header') and hasattr(ros_transform, 'transform'):
+        #geometry_msgs/TransformStamped
+        R=msg2R(ros_transform.transform.rotation)
+        p=msg2p(ros_transform.transform.translation)
+        parent_frame_id=ros_transform.header.frame_id
+        child_frame_id=ros_transform.child_frame_id
+        return rox.Transform(R,p,parent_frame_id,child_frame_id)
+    if hasattr(ros_transform, 'position') and hasattr(ros_transform, 'orientation'):
+        #geometry_msgs/Pose
+        R=msg2R(ros_transform.orientation)
+        p=msg2p(ros_transform.position)
+        return rox.Transform(R,p)
+    elif hasattr(ros_transform, 'header') and hasattr(ros_transform, 'pose'):
+        #geometry_msgs/PoseStamped
+        R=msg2R(ros_transform.pose.orientation)
+        p=msg2p(ros_transform.pose.position)
+        parent_frame_id=ros_transform.header.frame_id        
+        return rox.Transform(R,p,parent_frame_id)
+    else:
+        assert False, "Invalid data type for ros_transform"
+
+def transform2msg(transform):
+    """
+    Converts a general_robotics_toolbox.Transform into a geometry_msgs/Transform message
+    
+    :type pose: general_robotics_toolbox.Transform
+    :param pose: general_robotics_toolbox.Transform class instance
+    :rtype: geometry_msgs.msg.Transform
+    :return The ROS Transform message
+    """
+    return Transform(p2msg(transform.p), R2msg(transform.R))    
+
+def transform2transform_stamped_msg(transform):
+    """
+    Converts a general_robotics_toolbox.Transform into a geometry_msgs/TransformStamped message
+    
+    :type pose: general_robotics_toolbox.Transform
+    :param pose: general_robotics_toolbox.Transform class instance
+    :rtype: geometry_msgs.msg.TransformStamped
+    :return The ROS Transform message
+    """
+    r=TransformStamped()
+    r.transform=Transform(p2msg(transform.p), R2msg(transform.R))
+    if transform.child_frame_id is not None:
+        r.child_frame_id=transform.child_frame_id
+    if transform.parent_frame_id is not None:
+        r.header.frame_id=transform.parent_frame_id        
+    return r
+
+def transform2pose_msg(transform):
+    """
+    Converts a general_robotics_toolbox.Transform into a geometry_msgs/Pose message
+    
+    :type pose: general_robotics_toolbox.Transform
+    :param pose: general_robotics_toolbox.Transform class instance
     :rtype: geometry_msgs.msg.Pose
     :return The ROS Pose message
     """
-    return Pose(p2msg(pose.p), R2msg(pose.R))    
+    return Pose(p2point_msg(transform.p), R2msg(transform.R))    
+
+def transform2pose_stamped_msg(transform):
+    """
+    Converts a general_robotics_toolbox.Transform into a geometry_msgs/PoseStamped message
+    
+    :type pose: general_robotics_toolbox.Transform
+    :param pose: general_robotics_toolbox.Transform class instance
+    :rtype: geometry_msgs.msg.PoseStamped
+    :return The ROS Pose message
+    """
+    r=PoseStamped()
+    r.pose=Pose(p2point_msg(transform.p), R2msg(transform.R))    
+    if transform.parent_frame_id is not None:
+        r.header.frame_id=transform.parent_frame_id        
+    return r
 
 def msg2twist(ros_twist):
     """

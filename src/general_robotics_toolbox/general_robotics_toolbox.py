@@ -304,18 +304,20 @@ class Robot(object):
         
     
             
-class Pose(object):
+class Transform(object):
     """
-    Holds a pose consisting of a rotation matrix and a vector
+    Holds a transform consisting of a rotation matrix and a vector
     
     :attribute R: The 3 x 3 rotation matrix
-    :attribute p: The 3 x 1 position vector    
+    :attribute p: The 3 x 1 position vector
+    
+    Note: Transform objects are also used to represent the pose of links 
     """
     
     
-    def __init__(self, R, p):
+    def __init__(self, R, p, parent_frame_id=None, child_frame_id=None):
         """
-        Construct a Pose object consisting of a rotation matrix and a vector
+        Construct a Transform object consisting of a rotation matrix and a vector
     
         :type  R: numpy.array
         :param R: The 3 x 3 rotation matrix
@@ -328,11 +330,13 @@ class Pose(object):
         
         self.R=np.array(R)
         self.p=np.reshape(p,(3,))
+        self.parent_frame_id=parent_frame_id
+        self.child_frame_id=child_frame_id
         
     def __mul__(self, other):
         R = np.dot(self.R, other.R)
         p = self.p + np.dot(self.R, other.p)
-        return Pose(R,p)
+        return Transform(R,p)
     
     def __eq__(self, other):
         #Use "np.isclose" because of numerical accuracy issues
@@ -345,7 +349,28 @@ class Pose(object):
     def inv(self):
         R=np.transpose(self.R)
         p=-np.dot(R,self.p)
-        return Pose(R,p)
+        return Transform(R,p)
+    
+    def __repr__(self):
+        r = ["Transform(", \
+            "    R = " + np.array_repr(self.R, precision=4, suppress_small=True).replace('\n', '\n' + ' '*8), \
+            "    p = " + np.array_repr(self.p, precision=4, suppress_small=True)]
+        if self.parent_frame_id is not None:
+            r.append("    parent_frame_id = \"" + self.parent_frame_id + "\"")
+        if self.child_frame_id is not None:
+            r.append("    child_frame_id = \"" + self.child_frame_id + "\"")
+        r.append(")\n")        
+        return "\n".join(r)
+    
+    def __str__(self):
+        r = ["R = " + np.array_str(self.R, precision=4, suppress_small=True).replace('\n', '\n' + ' '*4), \
+          "p = " + np.array_str(self.p, precision=4, suppress_small=True)]
+        if self.parent_frame_id is not None:
+            r.append("parent_frame_id = \"" + self.parent_frame_id + "\"")
+        if self.child_frame_id is not None:
+            r.append("child_frame_id = \"" + self.child_frame_id + "\"")
+        r.append("\n")        
+        return "\n".join(r)  
     
 def fwdkin(robot, theta):
     """
@@ -356,7 +381,7 @@ def fwdkin(robot, theta):
     :param   robot: The robot object containing kinematic information
     :type    theta: numpy.array
     :param   theta: N x 1 array of joint angles. Must have same number of joints as Robot object
-    :rtype:  Pose
+    :rtype:  Transform
     :return: The Pose of the robot tool flange    
     """    
     
@@ -379,7 +404,7 @@ def fwdkin(robot, theta):
         p = p + R.dot(robot.p_tool)
         R = R.dot(robot.R_tool)  
     
-    return Pose(R, p)
+    return Transform(R, p)
 
     
 def robotjacobian(robot, theta):
