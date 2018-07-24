@@ -208,6 +208,18 @@ def quatjacobian(q):
         
     return J
 
+def rpy2R(rpy):
+    return rot([0,0,1],rpy[2]).dot(rot([0,1,0],rpy[1]).dot(rot([1,0,0],rpy[0])))
+
+def R2rpy(R):
+    assert np.linalg.norm(R[0:2,0]) > np.finfo(float).eps * 10.0, "Singular rpy requested"
+    
+    r=np.arctan2(R[2,1],R[2,2])
+    y=np.arctan2(R[1,0], R[0,0])
+    p=np.arctan2(-R[2,0], np.linalg.norm(R[2,1:3]))
+        
+    return (r,p,y)    
+
 class Robot(object):
     """
     Holds the kinematic information for a single chain robot

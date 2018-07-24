@@ -113,7 +113,24 @@ class Test_quatjacobian(unittest.TestCase):
         
         np.testing.assert_allclose(J, J_t, atol=1e-6)
         
+
+class Test_rpy2R(unittest.TestCase):
+    def runTest(self):
+        rpy1=np.deg2rad([10,-30,90])
+        R1=rox.rpy2R(rpy1)
+        R1_t=np.array([[-0.0000000, -0.9848077,  0.1736482], \
+                       [0.8660254, -0.0868241, -0.4924039], \
+                       [0.5000000,  0.1503837,  0.8528686 ]])
+        np.testing.assert_allclose(R1, R1_t, atol=1e-6)
         
+        rpy2=rox.R2rpy(R1)
+        np.testing.assert_allclose(rpy1,rpy2, atol=1e-6)
+        
+        #Check singularity
+        rpy3=np.deg2rad([10,90,-30])
+        R3=rox.rpy2R(rpy3)
+        self.assertRaises(Exception, lambda: rox.R2rpy(R3))        
+
 class Test_fwdkin(unittest.TestCase):
     
     def runTest(self):
@@ -364,6 +381,7 @@ class GeneralRoboticsToolboxTestSuite(unittest.TestSuite):
         self.addTest(Test_q2R())
         self.addTest(Test_quatcomplement())
         self.addTest(Test_quatjacobian())
+        self.addTest(Test_rpy2R())
         self.addTest(Test_fwdkin())
         self.addTest(Test_robotjacobian())
         self.addTest(Test_subproblems())
