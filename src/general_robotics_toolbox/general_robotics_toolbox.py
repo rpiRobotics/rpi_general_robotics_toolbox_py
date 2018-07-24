@@ -691,5 +691,16 @@ def subproblem4(p, q, k, d):
     
     return [-phi+psi, -phi-psi+np.pi]
     
-    
+def random_R():
+    q=np.random.rand(4)
+    q=q/np.linalg.norm(q)
+    return q2R(q)
+
+def random_p():
+    return np.random.rand(3)
+
+def random_transform():
+    return Transform(random_R(), random_p())
+
+
     
