@@ -32,6 +32,9 @@ from . import general_robotics_toolbox as rox
 import tf
 import rospy
 
+#Import exceptions used by ROS tf module
+from tf2_ros import TransformException as Exception, ConnectivityException, LookupException, ExtrapolationException
+
 class TransformListener(object):
     def __init__(self, *args, **kwargs):
         self.ros_listener=tf.TransformListener(*args, **kwargs)
