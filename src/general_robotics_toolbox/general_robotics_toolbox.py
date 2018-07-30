@@ -348,7 +348,7 @@ class Transform(object):
     def __mul__(self, other):
         R = np.dot(self.R, other.R)
         p = self.p + np.dot(self.R, other.p)
-        return Transform(R,p)
+        return Transform(R,p,self.parent_frame_id, other.child_frame_id)
     
     def __eq__(self, other):
         #Use "np.isclose" because of numerical accuracy issues
@@ -361,7 +361,7 @@ class Transform(object):
     def inv(self):
         R=np.transpose(self.R)
         p=-np.dot(R,self.p)
-        return Transform(R,p)
+        return Transform(R,p,self.child_frame_id, self.parent_frame_id)
     
     def __repr__(self):
         r = ["Transform(", \
