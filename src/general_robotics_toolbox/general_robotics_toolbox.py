@@ -231,12 +231,18 @@ class Robot(object):
     :attribute joint_upper_limit: A list of N numbers containing the joint upper limits. Optional
     :attribute joint_vel_limit: A list of N numbers containing the joint velocity limits. Optional
     :attribute joint_acc_limit: A list of N numbers containing the joint acceleration limits. Optional
-    :attribute M: A list of N, 6 x 6 spatial inertia matrices for the links. Optional 
+    :attribute M: A list of N, 6 x 6 spatial inertia matrices for the links. Optional
+    :attribute R_tool: A 3 x 3 rotation matrix for the tool frame. Optional
+    :attribute p_tool: A 3 x 1 vector for the tool frame. Optional
+    :attribute joint_names: A list of N strings containing the names of the joints if loaded from URDF. Optional
+    :attribute root_link_name: A string containing the name of the kinematic chain root link if loaded from URDF. Optional
+    :attribute tip_link_name: A string containing the name of the kinematic chain tip link if loaded from URDF. Optional
     
     """
     
     
-    def __init__(self, H, P, joint_type, joint_lower_limit = None, joint_upper_limit = None, joint_vel_limit = None, joint_acc_limit = None, M = None, R_tool=None, p_tool=None):
+    def __init__(self, H, P, joint_type, joint_lower_limit = None, joint_upper_limit = None, joint_vel_limit = None, joint_acc_limit = None, M = None, \
+                 R_tool=None, p_tool=None, joint_names = None, root_link_name = None, tip_link_name = None):
         
         """
         Construct a Robot object holding the kinematic information for a single chain robot
@@ -261,6 +267,12 @@ class Robot(object):
         :param R_tool: A 3 x 3 rotation matrix for the tool frame. Optional
         :type  p_tool: numpy.array
         :param p_tool: A 3 x 1 vector for the tool frame. Optional
+        :type  joint_names: list of string
+        :param joint_names: A list of N strings containing the names of the joints if loaded from URDF. Optional
+        :type  root_link_name: string
+        :param root_link_name: A string containing the name of the kinematic chain root link if loaded from URDF. Optional
+        :type  tip_link_name: string
+        :param tip_link_name: A string containing the name of the kinematic chain tip link if loaded from URDF. Optional
     
         """
         
@@ -313,6 +325,12 @@ class Robot(object):
         self.H = H
         self.P = P
         self.joint_type = joint_type
+        
+        if joint_names is not None:
+            assert len(joint_names) == len(joint_type)
+        self.joint_names = joint_names
+        self.root_link_name = root_link_name
+        self.tip_link_name = tip_link_name
         
     
             

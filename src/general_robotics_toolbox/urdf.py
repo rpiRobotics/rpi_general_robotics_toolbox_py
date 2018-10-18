@@ -113,11 +113,12 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
     joint_lower_limit = [None]*n
     joint_upper_limit = [None]*n
     joint_vel_limit = [None]*n
+    joint_names = [None]*n
     
     i = 0
     
     R=np.identity(3)
-    
+            
     for c in chain:
         j = urdf_robot.joint_map[c]
         if j.origin is not None:
@@ -134,6 +135,7 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
                 joint_lower_limit[i] = j.limit.lower
                 joint_upper_limit[i] = j.limit.upper
                 joint_vel_limit[i] = j.limit.velocity
+            joint_names[i] = j.name
             i += 1            
         else:        
             assert False, "Only revolute, prismatic, fixed, and floating joints supported"
@@ -158,7 +160,9 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
         p_tool = np.zeros((3,))             
     
     robot = rox.Robot(H, P, joint_type, joint_lower_limit, joint_upper_limit, \
-                        joint_vel_limit, R_tool=R_tool, p_tool=p_tool)
+                        joint_vel_limit, R_tool=R_tool, p_tool=p_tool, \
+                        joint_names = joint_names, root_link_name = root_link, \
+                        tip_link_name = tip_link )
     
     return robot
     
