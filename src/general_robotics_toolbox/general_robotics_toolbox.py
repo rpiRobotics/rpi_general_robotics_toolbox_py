@@ -53,7 +53,10 @@ def hat(k):
     khat[2,1]=k[0]    
     return khat
 
-# generate 3 x 3 rotation matrix for theta degrees about k
+def invhat(khat):
+    return np.array([(-khat[1,2] + khat[2,1]),(khat[0,2] - khat[2,0]),(-khat[0,1]+khat[1,0])])/2
+    
+
 def rot(k, theta):
     """
     Generates a 3 x 3 rotation matrix from a unit 3 x 1 unit vector axis
@@ -73,6 +76,47 @@ def rot(k, theta):
     khat = hat(k)
     khat2 = khat.dot(khat)
     return I + math.sin(theta)*khat + (1.0 - math.cos(theta))*khat2
+
+def R2rot(R):
+    """
+    Recover k and theta from a 3 x 3 rotation matrix
+    
+        sin(theta) = | R-R^T |/2
+        cos(theta) = (tr(R)-1)/2
+        k = invhat(R-R^T)/(2*sin(theta))
+        theta = atan2(sin(theta),cos(theta)
+        
+    :type    R: numpy.array
+    :param   R: 3 x 3 rotation matrix    
+    :rtype:  (numpy.array, number)
+    :return: ( 3 x 1 k unit vector, rotation about k in radians)   
+    
+    """
+    
+    R1 = R-R.transpose()
+    
+    sin_theta = np.linalg.norm(R1)/np.sqrt(8)
+    
+    cos_theta = (np.trace(R) - 1.0)/2.0
+    theta = np.arctan2(sin_theta, cos_theta)
+    
+    #Avoid numerical singularity
+    if sin_theta < 1e-6:
+               
+        if (cos_theta > 0):
+            return [0,0,1], 0
+        else:
+            B = (1.0/2.0) *(R + np.eye(3))
+            k = np.sqrt([B[0,0], B[1,1], B[2,2]])
+            if np.abs(k[0]) > 1e-6:
+                k[1] = k[1] * np.sign(B[0,1] / k[0])
+                k[2] = k[2] * np.sign(B[0,2] / k[0])
+            elif np.abs(k[1]) > 1e-6:
+                k[2] = k[2] * np.sign(B[0,2] / k[1])
+            return k, np.pi
+    
+    k = invhat(R1)/(2.0*sin_theta)    
+    return k, theta
 
 def screw_matrix(r):
     """
@@ -149,6 +193,36 @@ def R2q(R):
                       ((R[1,2] + R[2,1]) / S), \
                       (0.25*S)])
     return q
+
+def q2rot(q):
+    """
+    Converts a quaternion into k and theta    
+    
+    :type    q: numpy.array
+    :param   q: 4 x 1 vector representation of a quaternion q = [q0;qv]
+    :rtype:  (numpy.array, number)
+    :return: the 3x1 rotation vector and theta    
+    """
+    theta = 2 * np.arccos(q[0])
+    if np.abs(theta) < 1e-6:
+        return np.array([0,0,1]), 0.0
+    k = q[1:4]/np.sin(theta/2.0)
+    return k, theta
+
+def rot2q(k, theta):
+    """
+    Converts a 3 x 1 rotation vector and theta into a quaternion.  Quaternion is
+    returned in the form q = [q0;qv].
+    
+    :type    k: numpy.array
+    :param   k: 3 x 1 unit vector axis
+    :type    theta: number
+    :param   theta: rotation about k in radians
+    :rtype:  numpy.array
+    :return: the quaternion as a 4 x 1 vector q = [q0;qv] 
+      
+    """
+    return np.concatenate(([np.cos(theta/2.0)], k.reshape((3,))*np.sin(theta/2.0)))
 
 def quatcomplement(q):
     """

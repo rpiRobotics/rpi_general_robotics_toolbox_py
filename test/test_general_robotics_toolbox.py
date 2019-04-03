@@ -41,7 +41,45 @@ class Test_rot(unittest.TestCase):
                         [0.5720833,0.6872731,0.4476342]])        
         self._rot_test(np.array([0.4490221,0.30207945,0.84090853]), 2.65949884, rot_4)
         
+class Test_R2rot(unittest.TestCase):
+    
+    def _R2rot_test(self, k1, theta1):
+        R = rox.rot(k1,theta1)
+        k2, theta2 = rox.R2rot(R)
+        if abs(theta1-theta2) > (theta1 + theta2):
+            k2 = -k2
+            theta2 = -theta2
+                
+        np.testing.assert_allclose(theta1,theta2, atol=1e-6)
+        if (abs(theta1) < 1e-9):
+            return
         
+        if ((np.abs(theta1) - np.pi) < 1e-9):
+            if np.linalg.norm(k1+k2) < 1e-6:
+                np.testing.assert_allclose(k1,-k2, atol=1e-6)
+                return
+            np.testing.assert_allclose(k1,k2, atol=1e-6)
+            return
+        
+        np.testing.assert_allclose(k1,k2, atol=1e-6)
+        
+            
+    
+    def runTest(self):
+        self._R2rot_test(np.array([1,0,0]), np.pi/2.0)
+        self._R2rot_test(np.array([0,1,0]), np.pi/2.0)
+        self._R2rot_test(np.array([0,0,1]), np.pi/2.0)
+        self._R2rot_test(np.array([0.4490221,0.30207945,0.84090853]), 2.65949884)
+        
+        #Singularities
+        self._R2rot_test([1,2,3]/np.linalg.norm([1,2,3]), 1e-10)
+        self._R2rot_test([2,-1,3]/np.linalg.norm([2,-1,3]), np.pi + 1e-10)
+        self._R2rot_test([-2,-1,3]/np.linalg.norm([-2,-1,3]), np.pi + 1e-10)
+        self._R2rot_test([2,-1,-3]/np.linalg.norm([2,-1,-3]), np.pi + 1e-10)
+        self._R2rot_test([0,-1,-3]/np.linalg.norm([0,-1,-3]), np.pi + 1e-10)
+        self._R2rot_test([0,0,1], np.pi + 1e-10)
+        
+
 class Test_screwmatrix(unittest.TestCase):
     
     def runTest(self):
@@ -77,6 +115,28 @@ class Test_q2R(unittest.TestCase):
         q=np.array([0.2387194, 0.4360402, 0.2933459, 0.8165967])
         rot=rox.q2R(q)
         np.testing.assert_allclose(rot, rot_t, atol=1e-6)
+        
+class Test_rot2q(unittest.TestCase):
+    
+    def runTest(self):
+        k, theta=rox.R2rot(np.array([[-0.5057639,-0.1340537,0.8521928], \
+                      [0.6456962,-0.7139224,0.2709081], \
+                      [0.5720833,0.6872731,0.4476342]]))
+        
+        q_t=np.array([0.2387194, 0.4360402, 0.2933459, 0.8165967])
+        q=rox.rot2q(k,theta)
+        np.testing.assert_allclose(q_t, q, atol=1e-6)
+     
+class Test_q2rot(unittest.TestCase):
+    
+    def runTest(self):
+        rot_t=np.array([[-0.5057639,-0.1340537,0.8521928], \
+                      [0.6456962,-0.7139224,0.2709081], \
+                      [0.5720833,0.6872731,0.4476342]])
+        
+        q=np.array([0.2387194, 0.4360402, 0.2933459, 0.8165967])
+        k, theta=rox.q2rot(q)
+        np.testing.assert_allclose(rox.rot(k, theta), rot_t, atol=1e-6)
 
 class Test_quatcomplement(unittest.TestCase):
     
@@ -376,9 +436,12 @@ class GeneralRoboticsToolboxTestSuite(unittest.TestSuite):
         super(GeneralRoboticsToolboxTestSuite, self).__init__()
         self.addTest(Test_hat())
         self.addTest(Test_rot())
+        self.addTest(Test_R2rot())
         self.addTest(Test_screwmatrix())
         self.addTest(Test_R2q())
         self.addTest(Test_q2R())
+        self.addTest(Test_rot2q())
+        self.addTest(Test_q2rot())
         self.addTest(Test_quatcomplement())
         self.addTest(Test_quatjacobian())
         self.addTest(Test_rpy2R())
