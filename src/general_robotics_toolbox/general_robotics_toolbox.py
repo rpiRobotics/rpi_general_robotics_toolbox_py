@@ -373,16 +373,16 @@ class Robot(object):
             assert (len(joint_vel_limit) == len(joint_type))
             self.joint_vel_limit=joint_vel_limit
         else:
-            self.joint_vel_limits=None
+            self.joint_vel_limit=None
             
         if (joint_acc_limit is not None):
             assert (len(joint_acc_limit) == len(joint_type))
             self.joint_acc_limit=joint_acc_limit
         else:
-            self.joint_acc_limits=None
+            self.joint_acc_limit=None
                
         if M is not None:
-            assert (len(M) == H.shape[1])
+            assert (len(M) == P.shape[1])
             for m in M:
                 assert (m.shape == (6,6))
             self.M = M

@@ -113,12 +113,14 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
     joint_lower_limit = [None]*n
     joint_upper_limit = [None]*n
     joint_vel_limit = [None]*n
+    joint_effort_limit = [None]*n
     joint_names = [None]*n
+    M = [None]*(n+1)
     
     i = 0
     
     R=np.identity(3)
-            
+    
     for c in chain:
         j = urdf_robot.joint_map[c]
         if j.origin is not None:
@@ -126,6 +128,8 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
                 P[:,i] += R.dot(j.origin.xyz)
             if j.origin.rpy is not None:
                 R = R.dot(_rpy_to_rot(j.origin.rpy))
+        if urdf_robot.link_map[j.child].inertial is not None:
+            M[i] = _append_inertia(M[i], _convert_inertial(urdf_robot.link_map[j.parent].inertial,R))
         if j.joint_type == 'fixed':
             pass            
         elif j.joint_type == 'revolute' or j.joint_type == 'prismatic':            
@@ -135,11 +139,14 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
                 joint_lower_limit[i] = j.limit.lower
                 joint_upper_limit[i] = j.limit.upper
                 joint_vel_limit[i] = j.limit.velocity
+                joint_effort_limit[i] = j.limit.effort
             joint_names[i] = j.name
             i += 1            
         else:        
             assert False, "Only revolute, prismatic, fixed, and floating joints supported"
     
+    M[-1] = _append_inertia(M[-1],_convert_inertial(urdf_robot.link_map[j.child].inertial,R))
+
     if None in joint_lower_limit or None in joint_upper_limit:
         joint_lower_limit = None
         joint_upper_limit = None
@@ -151,7 +158,7 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
         joint_vel_limit = None
     else:
         joint_vel_limit = np.array(joint_vel_limit)
-    
+        
     if np.allclose(np.zeros((3,3)), R, atol=1e-5):
         R_tool = None
         p_tool = None
@@ -159,13 +166,66 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
         R_tool = R
         p_tool = np.zeros((3,))             
     
+    if None in M:
+        M = None
+
     robot = rox.Robot(H, P, joint_type, joint_lower_limit, joint_upper_limit, \
                         joint_vel_limit, R_tool=R_tool, p_tool=p_tool, \
                         joint_names = joint_names, root_link_name = root_link, \
-                        tip_link_name = tip_link )
+                        tip_link_name = tip_link, M = M )
+
+    # Tack on joint_effort_limit if available
+    if not None in joint_effort_limit:
+        robot.joint_effort_limit = joint_effort_limit
     
     return robot
-    
+
+def _convert_inertial(urdf_inertial, R):
+    if urdf_inertial is None:
+        return None
+
+    if (urdf_inertial.mass is None or urdf_inertial.mass <=1e-6):
+        return None
+
+    m = urdf_inertial.mass
+
+    p_com = np.zeros((3,))
+    R_com = np.eye(3)
+
+    if (urdf_inertial.origin is not None):
+        if (urdf_inertial.origin.xyz is not None):
+            p_com[:] = urdf_inertial.origin.xyz
+        if (urdf_inertial.origin.rpy is not None):
+            R_com = _rpy_to_rot(urdf_inertial.origin.rpy)
+
+    I = np.zeros((3,3))
+    if (urdf_inertial.inertia is not None):
+        inr = urdf_inertial.inertia
+        I = np.matrix([[inr.ixx, inr.ixy, inr.ixz],
+                      [inr.ixy, inr.iyy, inr.iyz],
+                      [inr.ixz, inr.iyz, inr.izz]])
+
+    # Rotate inertia matrix
+    I = R_com.dot(I).dot(R_com.transpose())
+    # Translate inertia matrix (parallel axis theorem)
+    I += m * np.inner(p_com,p_com) * np.eye(3) - m * np.outer(p_com,p_com)
+
+    M = np.block([[I, m*rox.hat(p_com)],
+                  [-m*rox.hat(p_com), m*np.eye(3)]])
+
+    return M
+
+
+
+def _append_inertia(old_inertia,new_inertia):
+    if (new_inertia is None):
+        return old_inertia
+    if (old_inertia is None):
+        return new_inertia
+    return np.sum(old_inertia, new_inertia)
+
+
+
 def robot_from_xml_file(fname, package = None, root_link = None, tip_link = None):
     """
     Loads a Robot class from a file containing a robot described in URDF XML format.
