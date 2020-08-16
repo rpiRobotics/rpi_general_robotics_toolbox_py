@@ -166,9 +166,9 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
         R_tool = R
         p_tool = np.zeros((3,))             
     
-    if None in M:
+    if any([True for m1 in M if m1 is None]):
         M = None
-
+    
     robot = rox.Robot(H, P, joint_type, joint_lower_limit, joint_upper_limit, \
                         joint_vel_limit, R_tool=R_tool, p_tool=p_tool, \
                         joint_names = joint_names, root_link_name = root_link, \
@@ -222,7 +222,7 @@ def _append_inertia(old_inertia,new_inertia):
         return old_inertia
     if (old_inertia is None):
         return new_inertia
-    return np.sum(old_inertia, new_inertia)
+    return np.add(old_inertia, new_inertia)
 
 
 
