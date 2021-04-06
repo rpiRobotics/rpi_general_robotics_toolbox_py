@@ -5,14 +5,15 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="general_robotics_toolbox", # Replace with your own username
-    version="0.0.1",
+    version="0.1.0",
     author="John Wason",
     author_email="wason@wasontech.com",
     description="General robotics toolbox developed by RPI",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/rpiRobotics/rpi_general_robotics_toolbox_py",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages("src"),
+    package_dir={"" :"src"},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
