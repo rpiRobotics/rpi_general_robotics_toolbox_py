@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="general_robotics_toolbox", # Replace with your own username
-    version="0.1.0",
+    version="0.1.1",
     author="John Wason",
     author_email="wason@wasontech.com",
     description="General robotics toolbox developed by RPI",
