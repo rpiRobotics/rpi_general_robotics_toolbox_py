@@ -21,4 +21,8 @@ setuptools.setup(
     ],
     install_requires=["numpy"],
     python_requires='>=2.7',
+    tests_require=['pytest'],
+    extras_require={
+        'test': ['pytest']
+    }
 )

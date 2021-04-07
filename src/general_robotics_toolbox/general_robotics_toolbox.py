@@ -29,6 +29,10 @@
 import math
 import numpy as np
 import warnings
+import sys
+
+if (sys.version_info > (3, 0)):
+    xrange = range
 
 def hat(k):
     """
