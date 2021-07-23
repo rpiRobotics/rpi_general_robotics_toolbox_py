@@ -509,7 +509,7 @@ def fwdkin(robot, theta):
     p=np.reshape(p,(3,))
         
     if robot.R_tool is not None and robot.p_tool is not None:
-        p = p + R.dot(robot.p_tool)
+        p = p + np.reshape(R.dot(robot.p_tool),(3,))
         R = R.dot(robot.R_tool)  
     
     return Transform(R, p)
