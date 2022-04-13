@@ -15,7 +15,7 @@ jobs:
       with:
         path: rpi_general_robotics_toolbox_py
     - name: pip
-      run: python3 -m pip install urdf_parser_py pytest
+      run: python3 -m pip install pytest
     - name: pip local package
       run: pip install .
       working-directory: rpi_general_robotics_toolbox_py

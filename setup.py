@@ -19,7 +19,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["numpy"],
+    install_requires=["numpy","urdf_parser_py"],
     python_requires='>=2.7',
     tests_require=['pytest'],
     extras_require={
