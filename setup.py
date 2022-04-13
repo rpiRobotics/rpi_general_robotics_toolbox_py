@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="general_robotics_toolbox", # Replace with your own username
-    version="0.1.2",
+    version="0.1.3",
     author="John Wason",
     author_email="wason@wasontech.com",
     description="General robotics toolbox developed by RPI",
@@ -19,7 +19,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["numpy"],
+    install_requires=["numpy","urdf_parser_py"],
     python_requires='>=2.7',
     tests_require=['pytest'],
     extras_require={

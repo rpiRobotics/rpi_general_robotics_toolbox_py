@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  release:
+    types:
+      - created
+
+jobs:
+  main:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: rpi_general_robotics_toolbox_py
+    - name: pip
+      run: python3 -m pip install pytest
+    - name: pip local package
+      run: pip install .
+      working-directory: rpi_general_robotics_toolbox_py
+    - name: pytest
+      run: python3 -m pytest
+      working-directory: rpi_general_robotics_toolbox_py
+    - name: build wheel
+      run: python3 setup.py bdist_wheel
+      working-directory: rpi_general_robotics_toolbox_py
+    - name: archive out
+      uses: actions/upload-artifact@v2
+      with:
+        name: 'out'
+        path: ./**/*.whl
