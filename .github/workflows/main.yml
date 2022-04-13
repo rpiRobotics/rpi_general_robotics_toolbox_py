@@ -18,16 +18,13 @@ jobs:
       run: python3 -m pip install urdf_parser_py pytest
     - name: pip local package
       run: pip install .
-      with:
-        path: rpi_general_robotics_toolbox_py
+      working-directory: rpi_general_robotics_toolbox_py
     - name: pytest
       run: python3 -m pytest
-      with:
-        path: rpi_general_robotics_toolbox_py
+      working-directory: rpi_general_robotics_toolbox_py
     - name: build wheel
       run: python3 setup.py bdist_wheel
-      with:
-        path: rpi_general_robotics_toolbox_py
+      working-directory: rpi_general_robotics_toolbox_py
     - name: archive out
       uses: actions/upload-artifact@v2
       with:
