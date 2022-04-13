@@ -10,7 +10,7 @@ import general_robotics_toolbox.ros_msg as rox_msg
 #Numeric precision reduced for literals
 eps = 1e-6 #np.finfo(np.float64).eps
 
-
+@pytest.mark.skip
 def test_ros_tf_listener():
     l=rox_tf.TransformListener()
     rox_tf1=rox.random_transform()
