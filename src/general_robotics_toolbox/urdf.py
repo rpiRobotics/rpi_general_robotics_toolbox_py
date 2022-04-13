@@ -106,7 +106,7 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
     chain = urdf_robot.get_chain(root_link, tip_link, True, False, True)
     assert len(chain) > 0, "Invalid robot chain found"        
         
-    n = len(filter(lambda c: urdf_robot.joint_map[c].joint_type != 'fixed', chain))
+    n = len(list(filter(lambda c: urdf_robot.joint_map[c].joint_type != 'fixed', chain)))
     P = np.zeros((3, n+1))
     H = np.zeros((3, n))
     joint_type = np.zeros(n)
