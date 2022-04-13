@@ -28,8 +28,12 @@
 import os
 import numpy as np
 from urdf_parser_py.urdf import URDF
-import rospkg
-import xacro
+try:
+    import rospkg
+except: pass
+try:
+    import xacro
+except: pass
 import general_robotics_toolbox as rox
 
 def _resolve_file(fname, package = None):
