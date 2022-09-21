@@ -62,7 +62,7 @@ class normalize_joints(object):
                 c = np.argwhere(np.logical_and(l < b,  b < u))
                 if len(c) == 0:
                     return None                
-                theta += np.asscalar(a[c[0]])     
+                theta += (a[c[0]]).item()
         
         if self._use_last_joints:
             diff = self._last_joints[joint] - theta                               
@@ -76,7 +76,7 @@ class normalize_joints(object):
                 else:                
                     theta_v = theta + 2*np.pi*np.arange(n_diff, -np.sign(n_diff), - np.sign(n_diff))
                     theta_ind = np.argwhere(np.logical_and(l < theta_v, theta_v < u))
-                    theta = np.asscalar(theta_v[theta_ind[0]])                
+                    theta = theta_v[theta_ind[0]].item()
                 
         return theta
                                                         
