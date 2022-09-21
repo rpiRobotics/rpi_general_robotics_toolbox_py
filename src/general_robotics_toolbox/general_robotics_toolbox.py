@@ -287,7 +287,7 @@ def quatjacobian(q):
     return J
 
 def rpy2R(rpy):
-    return rot([0,0,1],rpy[2]).dot(rot([0,1,0],rpy[1]).dot(rot([1,0,0],rpy[0])))
+    return np.matmul(np.matmul(rot([0,0,1],rpy[2]),rot([0,1,0],rpy[1])),rot([1,0,0],rpy[0]))
 
 def R2rpy(R):
     assert np.linalg.norm(R[0:2,0]) > np.finfo(float).eps * 10.0, "Singular rpy requested"
@@ -442,8 +442,8 @@ class Transform(object):
         self.child_frame_id=child_frame_id
         
     def __mul__(self, other):
-        R = np.dot(self.R, other.R)
-        p = self.p + np.dot(self.R, other.p)
+        R = np.matmul(self.R, other.R)
+        p = self.p + np.matmul(self.R, other.p)
         return Transform(R,p,self.parent_frame_id, other.child_frame_id)
     
     def __eq__(self, other):
@@ -456,7 +456,7 @@ class Transform(object):
     
     def inv(self):
         R=np.transpose(self.R)
-        p=-np.dot(R,self.p)
+        p=-np.matmul(R,self.p)
         return Transform(R,p,self.child_frame_id, self.parent_frame_id)
     
     def __repr__(self):
@@ -501,16 +501,16 @@ def fwdkin(robot, theta):
     R = np.identity(3)
     for i in xrange(0,len(robot.joint_type)):
         if (robot.joint_type[i] == 0 or robot.joint_type[i] == 2):
-            R = R.dot(rot(robot.H[:,[i]],theta[i]))
+            R = np.matmul(R,rot(robot.H[:,[i]],theta[i]))
         elif (robot.joint_type[i] == 1 or robot.joint_type[i] == 3):
-            p = p + theta[i] * R.dot(robot.H[:,[i]])
-        p = p + R.dot(robot.P[:,[i+1]])
+            p = p + theta[i] * np.matmul(R,robot.H[:,[i]])
+        p = p + np.matmul(R,robot.P[:,[i+1]])
         
     p=np.reshape(p,(3,))
         
     if robot.R_tool is not None and robot.p_tool is not None:
-        p = p + np.reshape(R.dot(robot.p_tool),(3,))
-        R = R.dot(robot.R_tool)  
+        p = p + np.reshape(np.matmul(R,robot.p_tool),(3,))
+        R = np.matmul(R,robot.R_tool)  
     
     return Transform(R, p)
 
@@ -547,17 +547,17 @@ def robotjacobian(robot, theta):
     
     for i in xrange(0, len(joint_type)):
         if (joint_type[i] == 0 or joint_type[i] == 2):
-            R = R.dot(rot(H[:,[i]],theta[i]))
+            R = np.matmul(R,rot(H[:,[i]],theta[i]))
         elif (joint_type[i] == 1 or joint_type[i] == 3):
-            p = p + theta[i] * R.dot(H[:,[i]])
-        p = p + R.dot(P[:,[i+1]])
+            p = p + theta[i] * np.matmul(R,H[:,[i]])
+        p = p + np.matmul(R,P[:,[i+1]])
         pOi[:,[i+1]] = p
-        hi[:,[i]] = R.dot(H[:,[i]])
+        hi[:,[i]] = np.matmul(R,H[:,[i]])
     
     pOT = pOi[:,[len(joint_type)]]
     
     if robot.p_tool is not None:
-        pOT += R.dot(np.reshape(robot.p_tool,(3,1)))
+        pOT += np.matmul(R,np.reshape(robot.p_tool,(3,1)))
     
     J = np.zeros([6,len(joint_type)])
     i = 0
@@ -565,13 +565,13 @@ def robotjacobian(robot, theta):
     while (i < len(joint_type)):
         if (joint_type[i] == 0):
             J[0:3,[j]] = hi[:,[i]]
-            J[3:6,[j]] = hat(hi[:,[i]]).dot(pOT - pOi[:,[i]])
+            J[3:6,[j]] = np.matmul(hat(hi[:,[i]]),(pOT - pOi[:,[i]]))
         elif (joint_type[i] == 1):
             J[3:6,[j]] = hi[:,[i]]
         elif (joint_type[i] == 3):
-            J[3:6,[j]] = rot(hi[:,[i+2]], theta[i+2]).dot(hi[:,[i]])
+            J[3:6,[j]] = np.matmul(rot(hi[:,[i+2]], theta[i+2]),(hi[:,[i]]))
             J[0:3,[j+1]] = hi[:,[i+2]]
-            J[3:6,[j+1]] = hat(hi[:,[i+2]]).dot(pOT - pOi[:,[i+2]])
+            J[3:6,[j+1]] = np.matmul(hat(hi[:,[i+2]]),(pOT - pOi[:,[i+2]]))
             J = J[:,0:-1]
             i = i + 2
             j = j + 1
@@ -694,7 +694,7 @@ def subproblem2(p, q, k1, k2):
         warnings.warn("No solution - k1 != k2")
         return []
     
-    a = (np.array([[k12, -1], [-1, k12]]).dot(np.array([pk, qk]))) / (k12**2 - 1)
+    a = np.matmul([[k12, -1], [-1, k12]],[pk, qk]) / (k12**2 - 1)
     
     bb = (np.dot(p,p) - np.dot(a,a) - 2*a[0]*a[1]*k12)
     if (np.abs(bb) < eps): bb=0
@@ -784,8 +784,8 @@ def subproblem4(p, q, k, d):
     :return: list of valid theta angles in radians    
     """
         
-    a = np.dot(p,hat(k)).dot(q)
-    b = -np.dot(p, hat(k).dot(hat(k).dot(q)))
+    a = np.matmul(np.matmul(p,hat(k)),q)
+    b = -np.matmul(p, np.matmul(hat(k),hat(k).dot(q)))
     c = np.subtract(d, (np.dot(p,q) -b))
     
     phi = np.arctan2(b, a)

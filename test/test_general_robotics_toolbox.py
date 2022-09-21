@@ -152,10 +152,10 @@ def test_quatproduct():
     
     q_1=np.array([0.63867877, 0.52251797, 0.56156573, 0.06089615])
     q_2=np.array([0.35764716, 0.61051424, 0.11540801, 0.69716703])
-    R_t=rox.q2R(q_1).dot(rox.q2R(q_2))
+    R_t=np.matmul(rox.q2R(q_1),rox.q2R(q_2))
     q_t=rox.R2q(R_t)
     
-    q = rox.quatproduct(q_1).dot(q_2).reshape((4,))
+    q = np.matmul(rox.quatproduct(q_1),q_2).reshape((4,))
                     
     np.testing.assert_allclose(q, q_t, atol=1e-6)
    
@@ -203,7 +203,7 @@ def test_fwdkin():
     #Another right-angle configuration
     joints2=np.array([180,-90,-90, 90, 90, 90])*np.pi/180.0
     pose2=rox.fwdkin(puma, joints2)
-    np.testing.assert_allclose(pose2.R, rox.rot([0,0,1],np.pi).dot(rox.rot([0,1,0], -np.pi/2)), atol=1e-6)
+    np.testing.assert_allclose(pose2.R, np.matmul(rox.rot([0,0,1],np.pi), rox.rot([0,1,0], -np.pi/2)), atol=1e-6)
     np.testing.assert_allclose(pose2.p, np.array([-0.75, 4.9, 31])*in_2_m)
     
     #Random configuration
@@ -288,8 +288,8 @@ def test_subproblems():
     assert len(a2) == 2
     
     
-    r1=rox.rot(z,a2[0][0]).dot(rox.rot(y,a2[0][1]))[:,0]
-    r2=rox.rot(z,a2[1][0]).dot(rox.rot(y,a2[1][1]))[:,0]
+    r1=np.matmul(rox.rot(z,a2[0][0]),rox.rot(y,a2[0][1]))[:,0]
+    r2=np.matmul(rox.rot(z,a2[1][0]),rox.rot(y,a2[1][1]))[:,0]
     
     np.testing.assert_allclose(r1, q2, atol=1e-4)
     np.testing.assert_allclose(r2, q2, atol=1e-4)
@@ -297,7 +297,7 @@ def test_subproblems():
     a3 = rox.subproblem2(x, z, z, y)
     assert len(a3) == 1
     
-    r3=rox.rot(z,a3[0][0]).dot(rox.rot(y,a3[0][1]))[:,0]        
+    r3=np.matmul(rox.rot(z,a3[0][0]),rox.rot(y,a3[0][1]))[:,0]        
     np.testing.assert_allclose(r3, z, atol=1e-4)
     
     #subproblem3
@@ -308,11 +308,11 @@ def test_subproblems():
     a5=rox.subproblem3(p4, q4, z, 1.25)
     
     assert len(a4) == 2
-    np.testing.assert_allclose(np.linalg.norm(np.add(q4, rox.rot(z, a4[0]).dot(p4))),0.5)
-    np.testing.assert_allclose(np.linalg.norm(np.add(q4, rox.rot(z, a4[1]).dot(p4))),0.5)
+    np.testing.assert_allclose(np.linalg.norm(np.add(q4, np.matmul(rox.rot(z, a4[0]),p4))),0.5)
+    np.testing.assert_allclose(np.linalg.norm(np.add(q4, np.matmul(rox.rot(z, a4[1]),p4))),0.5)
     
     assert len(a5) == 1
-    np.testing.assert_allclose(np.linalg.norm(np.add(q4, rox.rot(z, a5[0]).dot(p4))),1.25)
+    np.testing.assert_allclose(np.linalg.norm(np.add(q4, np.matmul(rox.rot(z, a5[0]),p4))),1.25)
     
     #subproblem4
     
@@ -322,8 +322,8 @@ def test_subproblems():
     
     a6=rox.subproblem4(p6, q6, z, d6)
             
-    np.testing.assert_allclose(np.dot(p6, rox.rot(z,a6[0]).dot(q6)), d6, atol=1e-4)
-    np.testing.assert_allclose(np.dot(p6, rox.rot(z,a6[1]).dot(q6)), d6, atol=1e-4)
+    np.testing.assert_allclose(np.dot(p6, np.matmul(rox.rot(z,a6[0]),q6)), d6, atol=1e-4)
+    np.testing.assert_allclose(np.dot(p6, np.matmul(rox.rot(z,a6[1]),q6)), d6, atol=1e-4)
                 
     
 def test_robot6_sphericalwrist_invkin():
