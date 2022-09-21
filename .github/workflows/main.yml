@@ -10,10 +10,23 @@ on:
 jobs:
   main:
     runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - python_version: "2.7"
+          - python_version: "3.7"
+          - python_version: "3.8"
+          - python_version: "3.9"
+          - python_version: "3.9"
+          - python_version: "3.10"
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         path: rpi_general_robotics_toolbox_py
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '${{ matrix.config.python_version }}'
     - name: pip
       run: python3 -m pip install pytest
     - name: pip local package
