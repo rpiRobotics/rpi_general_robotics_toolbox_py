@@ -55,8 +55,7 @@ def _load_xml_to_string(fname, package = None):
         return f.read()
 
 def _rpy_to_rot(rpy):
-    return rox.rot([0,0,1],rpy[2]).dot(rox.rot([0,1,0],rpy[1]))\
-        .dot(rox.rot([1,0,0],rpy[0]))
+    return np.matmul(np.matmul(rox.rot([0,0,1],rpy[2]),rox.rot([0,1,0],rpy[1])), rox.rot([1,0,0],rpy[0]))
         
         
 def robot_from_xml_string(xml_string, root_link = None, tip_link = None):
@@ -129,15 +128,15 @@ def _robot_from_urdf_robot(urdf_robot, root_link = None, tip_link = None):
         j = urdf_robot.joint_map[c]
         if j.origin is not None:
             if j.origin.xyz is not None:
-                P[:,i] += R.dot(j.origin.xyz)
+                P[:,i] += np.matmul(R,j.origin.xyz)
             if j.origin.rpy is not None:
-                R = R.dot(_rpy_to_rot(j.origin.rpy))
+                R = np.matmul(R,_rpy_to_rot(j.origin.rpy))
         if urdf_robot.link_map[j.child].inertial is not None:
             M[i] = _append_inertia(M[i], _convert_inertial(urdf_robot.link_map[j.parent].inertial,R))
         if j.joint_type == 'fixed':
             pass            
         elif j.joint_type == 'revolute' or j.joint_type == 'prismatic':            
-            H[:,i] = R.dot(j.axis)
+            H[:,i] = np.matmul(R,j.axis)
             joint_type[i] = 0 if j.joint_type == 'revolute' else 1
             if j.limit is not None:
                 joint_lower_limit[i] = j.limit.lower
@@ -210,7 +209,7 @@ def _convert_inertial(urdf_inertial, R):
                       [inr.ixz, inr.iyz, inr.izz]])
 
     # Rotate inertia matrix
-    I = R_com.dot(I).dot(R_com.transpose())
+    I = np.matmul(np.matmul(R_com,I),R_com.transpose())
     # Translate inertia matrix (parallel axis theorem)
     I += m * np.inner(p_com,p_com) * np.eye(3) - m * np.outer(p_com,p_com)
 
