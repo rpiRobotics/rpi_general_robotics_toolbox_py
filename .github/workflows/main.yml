@@ -33,10 +33,10 @@ jobs:
       run: pip install .
       working-directory: rpi_general_robotics_toolbox_py
     - name: pytest
-      run: python3 -m pytest
+      run: python -m pytest
       working-directory: rpi_general_robotics_toolbox_py
     - name: build wheel
-      run: python3 setup.py bdist_wheel
+      run: python setup.py bdist_wheel
       working-directory: rpi_general_robotics_toolbox_py
     - name: archive out
       uses: actions/upload-artifact@v2
