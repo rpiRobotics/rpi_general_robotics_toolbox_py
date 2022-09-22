@@ -380,7 +380,27 @@ def test_robot6_sphericalwrist_invkin():
             last_theta = theta + (np.random.rand(6)-0.5)*2*np.deg2rad(4)
             assert _test_last_configuration(robot, theta, last_theta)
     
-                
+
+def test_robot6_sphericalwrist_invkin_joint_equiv_config():
+    
+    robot=puma260b_robot()
+
+    theta = np.deg2rad([0.,0.,-90.,0.,30.,-190.])
+
+    pose_1 = rox.fwdkin(robot, theta)
+    theta2 = rox.robot6_sphericalwrist_invkin(robot, pose_1)
+    theta3 = rox.equivalent_configurations(robot,theta2)
+    
+    assert len(theta2) == 8
+    assert len(theta3) == 12
+
+    for theta2_i in theta2 + theta3:
+        pose_2 = rox.fwdkin(robot, theta2_i)
+        assert pose_1 == pose_2
+
+    # Assert that the original input was returned
+    assert np.min(np.max(np.abs(np.subtract(theta2 + theta3, theta)),axis=1)) < 1e-6
+
 def puma260b_robot():
     """Returns an approximate Robot instance for a Puma 260B robot"""
     

@@ -128,7 +128,7 @@ def robot6_sphericalwrist_invkin(robot, desired_pose, last_joints = None):
     :param   desired_pose: The desired pose of the robot
     :type    last_joints: list, tuple, or numpy.array
     :param   last_joints: The joints of the robot at the last timestep. The returned 
-             first returned joint configuration will be the closests to last_joints. Optional
+             first returned joint configuration will be the closets to last_joints. Optional
     :rtype:  list of numpy.array
     :return: A list of zero or more joint angles that match the desired pose. An
              empty list means that the desired pose cannot be reached. If last_joints
@@ -227,3 +227,66 @@ def robot6_sphericalwrist_invkin(robot, desired_pose, last_joints = None):
         return [theta_v[i] for i in list(np.argsort(theta_dist))]
     else:
         return theta_v
+
+def equivalent_configurations(robot, theta_v, last_joints = None):
+    """
+    Return equivalent robot configurations with joints +-360 degree joint offset within
+    joint limits
+    
+    :type    robot: general_robotics_toolbox.Robot
+    :param   robot: The robot object representing the geometry of the robot
+    :type    theta_v: list
+    :param   theta_v: The desired pose of the robot
+    :type    last_joints: list, tuple, or numpy.array
+    :param   last_joints: The joints of the robot at the last timestep. The returned 
+             first returned joint configuration will be the closets to last_joints. Optional
+    :rtype:  list of numpy.array
+    :return: A list of zero or more additional configurations that are equivalent with +-360 degree
+             joint offsets within joint limits.    
+    """
+    
+    equiv_theta = []
+    for theta1 in theta_v:
+        equiv_theta1 = []
+        upper_div, _ = np.divmod(robot.joint_upper_limit - theta1, 2*np.pi)
+        lower_div, _ = np.divmod(theta1 - robot.joint_lower_limit, 2*np.pi)
+
+        div_where = np.logical_or(upper_div > 0, lower_div > 0).nonzero()[0]
+
+        for ind in div_where.flatten():
+            if robot.joint_type[ind] != 0:
+                # Only do this on revolute joints!
+                continue 
+            equiv_theta1_i = []
+            for j in range(int(upper_div[ind])):
+                for equiv_theta1_j in equiv_theta1:
+                    theta2 = equiv_theta1_j.copy()
+                    theta2[ind] += 2.0 * np.pi * (j+1)
+                    equiv_theta1_i.append(theta2)    
+                theta2 = theta1.copy()
+                theta2[ind] += 2.0 * np.pi * (j+1)
+                equiv_theta1_i.append(theta2)                        
+            for j in range(int(lower_div[ind])):
+                for equiv_theta1_j in equiv_theta1:
+                    theta2 = equiv_theta1_j.copy()
+                    theta2[ind] -= 2.0 * np.pi * (j+1)
+                    equiv_theta1_i.append(theta2)
+                theta2 = theta1.copy()
+                theta2[ind] -= 2.0 * np.pi * (j+1)
+                equiv_theta1_i.append(theta2)
+            equiv_theta1.extend(equiv_theta1_i)
+        equiv_theta.extend(equiv_theta1)
+
+    theta_ret =[]
+
+    for eq_theta in equiv_theta:
+        for theta1 in theta_v:
+            if np.allclose(theta1, eq_theta):
+                continue
+        theta_ret.append(eq_theta)
+    
+    if last_joints is not None:
+        theta_dist = np.linalg.norm(np.subtract(theta_ret,last_joints), axis=1)
+        return [theta_ret[i] for i in list(np.argsort(theta_dist))]
+    else:
+        return theta_ret
