@@ -228,6 +228,109 @@ def robot6_sphericalwrist_invkin(robot, desired_pose, last_joints = None):
     else:
         return theta_v
 
+def ur_invkin(robot, desired_pose, last_joints = None):
+    """
+    Inverse kinematics for Universal Robot articulated industrial 
+    robots. Examples include UR3, UR5, UR10
+    
+    :type    robot: general_robotics_toolbox.Robot
+    :param   robot: The robot object representing the geometry of the robot
+    :type    desired_pose: general_robotics_toolbox.Transform
+    :param   desired_pose: The desired pose of the robot
+    :type    last_joints: list, tuple, or numpy.array
+    :param   last_joints: The joints of the robot at the last timestep. The returned 
+             first returned joint configuration will be the closets to last_joints. Optional
+    :rtype:  list of numpy.array
+    :return: A list of zero or more joint angles that match the desired pose. An
+             empty list means that the desired pose cannot be reached. If last_joints
+             is specified, the first entry is the closest configuration to last_joints.    
+    """
+    
+    R06 = desired_pose.R
+    p0T = desired_pose.p
+    
+    if robot.R_tool is not None and robot.p_tool is not None:
+        R06 = np.matmul(R06,np.transpose(robot.R_tool))
+        p0T = p0T - np.matmul(R06,robot.p_tool)
+    
+    H = robot.H
+    P = robot.P
+
+    assert np.allclose((np.array([ez,-ey,-ey,-ey,-ez,-ey]).T), H) or \
+           np.allclose((np.array([ez,ey,ey,ey,-ez,ey]).T), H), \
+           "Invalid UR robot format"
+    
+    theta_v = []
+
+    d1 = np.dot(ey, P[:,1] + P[:,2] + P[:,3] + P[:,4])
+    p04 = p0T - np.matmul(R06,P[:,6] + P[:,5])
+    v1 = p04
+    p1 = ey
+    
+    Q1 = rox.subproblem4(p1, v1, -H[:,0], d1)
+
+    normalize = normalize_joints(robot, last_joints)
+
+    for q1 in normalize(0, Q1):
+                
+        R01=rox.rot(H[:,0], q1)
+        R16 = np.matmul(R01.transpose(), R06)
+
+        v4 = np.matmul(R16,H[:,5])
+        p4 = H[:,5]
+
+        Q24_Q5 = rox.subproblem2(p4, v4, H[:,3], H[:,4])
+
+        for q24, q5 in Q24_Q5:
+            R04 = np.matmul(rox.rot(H[:,0],q1),rox.rot(H[:,3],q24))
+            
+            p23p = p04 - P[:,0] - np.matmul(R01,P[:,1]) - np.matmul(R04,P[:,4])
+
+            d3 = np.linalg.norm(p23p)
+            v3 = P[:,2]
+            p3 = P[:,3]
+            Q3 = rox.subproblem3(p3, v3, H[:,2], d3)
+
+            for q3 in normalize(2,Q3):
+                R23 = rox.rot(H[:,2],q3)
+                v2 = np.matmul(R01.T,p23p)
+                p2 = P[:,2] + np.matmul(R23, P[:,3])
+                q2 = rox.subproblem1(p2, v2, H[:,1])
+                
+                q2 = normalize(1, [q2])
+                if len(q2) == 0:
+                    continue
+                q2 = q2[0]        
+                
+                q4 = q24 - q2 - q3
+                q4 = normalize(3, [q4])
+                if len(q4) == 0:
+                    continue
+                q4 = q4[0]
+                R45 = rox.rot(H[:,4], q5)
+                R05 = np.matmul(R04,R45)
+                R56 = np.matmul(R05.transpose(),R06)
+
+                p6 = H[:,4]
+                v6 = np.matmul(R56,H[:,4])
+                
+                q6 = rox.subproblem1(p6, v6, H[:,5])
+                
+                q6 = normalize(5, [q6])
+                if len(q6) == 0:
+                    continue
+                q6 = q6[0]
+                
+                theta_v.append(np.array([q1, q2, q3, q4, q5, q6]))   
+
+    if last_joints is not None:
+        theta_dist = np.linalg.norm(np.subtract(theta_v,last_joints), axis=1)
+        return [theta_v[i] for i in list(np.argsort(theta_dist))]
+    else:
+        return theta_v
+
+
+
 def equivalent_configurations(robot, theta_v, last_joints = None):
     """
     Return equivalent robot configurations with joints +-360 degree joint offset within
