@@ -472,6 +472,78 @@ def test_iter_invkin():
     for robot in (robot1,robot2,robot3):
         _test_invkin_iter_random_configuration(robot, call_invkin, 100, tol=1e-4)
 
+def test_robot_aux_transforms():
+
+    def _new_aux_transform_robot(robot, T_tool, T_flange, T_base):
+        return rox.Robot(robot.H, robot.P, robot.joint_type, robot.joint_lower_limit, robot.joint_upper_limit, 
+            robot.joint_vel_limit, robot.joint_acc_limit, robot.M, T_tool.R, T_tool.p, robot.joint_names,
+            robot.root_link_name, robot.tip_link_name, T_flange, T_base)
+        
+
+    ex=np.array([1,0,0])
+    ey=np.array([0,1,0])
+    ez=np.array([0,0,1])
+
+    robot = puma260b_robot()
+
+    T_tool1 = rox.Transform(rox.rot(ey, np.deg2rad(30)), np.array([0.3,0.04,0.09]))
+    T_flange1 = rox.Transform(rox.rot(ex, np.deg2rad(86)), np.array([0.002,0.04,0.1]))
+    T_base1 = rox.Transform(rox.rot(ez, np.deg2rad(12)), np.array([0.1,0.8,0.342]))
+
+    robot_aux1 = _new_aux_transform_robot(robot, T_tool1, T_flange1, T_base1)
+
+    T_test1 = rox.random_transform()
+
+    T_test_aux1 = rox.apply_robot_aux_transforms(robot_aux1, T_test1)
+    assert T_test_aux1.isclose(T_base1 * T_test1 * T_flange1 * T_tool1)
+    T_test1_2 = rox.unapply_robot_aux_transforms(robot_aux1, T_test_aux1)
+    assert T_test1.isclose(T_test1_2)
+
+    T_test_fwd1 = rox.fwdkin(robot, np.deg2rad([10.,20.,12.,84.,72.,10.]))
+    T_test_aux_fwd1 = rox.fwdkin(robot_aux1, np.deg2rad([10.,20.,12.,84.,72.,10.]))
+    assert T_test_aux_fwd1.isclose(T_base1 * T_test_fwd1 * T_flange1 * T_tool1)
+
+    def _robot_aux_test(robot_, invkin_func, tol = 1e-6, max_failures = 0, _ignore_limits = False):
+        failures = 0
+        for _ in range(100):
+            try:
+                T_tool2 = rox.random_transform()
+                T_flange2 = rox.random_transform()
+                T_base2 = rox.random_transform()
+                T_base2 = rox.Transform(np.eye(3),np.zeros((3,)))
+                T_flange2 = rox.Transform(np.eye(3),np.zeros((3,)))
+                robot_aux2 = _new_aux_transform_robot(robot_, T_tool2, T_flange2, T_base2)
+                theta = np.random.rand(6)*(robot_.joint_upper_limit - robot_.joint_lower_limit - np.deg2rad(30)) \
+                    + robot_.joint_lower_limit + np.deg2rad(15)
+                                                    
+                last_theta = theta + (np.random.rand(6)-0.5)*2*np.deg2rad(4)
+                T_des2 = rox.fwdkin(robot_aux2, theta)
+
+                theta_invkin = invkin_func(robot_aux2, T_des2, last_theta)
+                T_ik2 = rox.fwdkin(robot_aux2, theta_invkin[0], _ignore_limits)
+                T_ik2_noaux = rox.fwdkin(robot_, theta_invkin[0], _ignore_limits)
+
+                assert T_des2.isclose(T_ik2, tol = tol)
+                assert T_des2.isclose(T_base2 * T_ik2_noaux * T_flange2 * T_tool2, tol = tol)
+                #assert np.allclose(theta_invkin[0], theta, atol=np.deg2rad(1))
+            except:
+                failures +=1
+                if failures > max_failures:
+                    raise
+
+    _robot_aux_test(robot,rox.robot6_sphericalwrist_invkin)
+    ur_robot = ur5e_robot()
+    ur_robot.R_tool = None
+    ur_robot.p_tool = None
+    _robot_aux_test(ur_robot,rox.ur_invkin)
+
+    def call_invkin(*args, **kwargs):
+        res, q = rox.iterative_invkin(*args, tol=1e-6, **kwargs)
+        assert res
+        return q
+
+    _robot_aux_test(robot,call_invkin, tol=1e-4, max_failures = 5, _ignore_limits = True)
+
 def puma260b_robot():
     """Returns an approximate Robot instance for a Puma 260B robot"""
     
