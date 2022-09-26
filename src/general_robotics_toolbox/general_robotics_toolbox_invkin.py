@@ -472,7 +472,7 @@ def iterative_invkin(robot, desired_pose, q_current, max_steps = 200, Kp = 0.3*n
         wd = np.matmul(KR, s)
         
         b = np.concatenate([wd,vd])
-        np.nan_to_num(b, copy=False, nan=0.0, posinf=None, neginf=None)
+        # np.nan_to_num(b, copy=False, nan=0.0, posinf=None, neginf=None)
         # print(b)
         # print(J0T)
         
