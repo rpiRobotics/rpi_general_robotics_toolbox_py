@@ -30,6 +30,7 @@ from __future__ import absolute_import
 
 import numpy as np
 from . import general_robotics_toolbox as rox
+import warnings
 
 ex = np.array([1,0,0])
 ey = np.array([0,1,0])
@@ -42,11 +43,11 @@ class normalize_joints(object):
     and last joint angles
     """
     
-    def __init__(self, robot, last_joints):
+    def __init__(self, robot, last_joints, _ignore_limits = False):
         self._lower_limit = robot.joint_lower_limit
         self._upper_limit = robot.joint_upper_limit
         self._check_limits = self._lower_limit is not None \
-            and self._upper_limit is not None
+            and self._upper_limit is not None and not _ignore_limits
                   
         self._last_joints = last_joints
         self._use_last_joints = last_joints is not None
@@ -393,3 +394,109 @@ def equivalent_configurations(robot, theta_v, last_joints = None):
         return [theta_ret[i] for i in list(np.argsort(theta_dist))]
     else:
         return theta_ret
+
+def iterative_invkin(robot, desired_pose, q_current, max_steps = 200, Kp = 0.3*np.eye(3), KR = 0.3*np.eye(3), tol = 1e-4): # inverse kinematics that uses Least Square solver
+    
+    """
+    Inverse kinematics using gradient descent. Convex solution based on q_current input
+    joint positions. Return may be out of range of robot since only produced a local solution!
+    
+    
+    :type    robot: general_robotics_toolbox.Robot
+    :param   robot: The robot object representing the geometry of the robot
+    :type    desired_pose: general_robotics_toolbox.Transform
+    :param   desired_pose: The desired pose of the robot
+    :type    q_current: list, tuple, or numpy.array
+    :param   q_current: Seed joint position for gradient descent
+    :type    max_steps: int
+    :param   max_steps: The maximum iterations before failing. Default 200
+    :type    Kp: np.array
+    :param   Kp: Gain array for position error. Default 0.3
+    :type    KR: np.array
+    :param   KP: Gain array for rotation error. Default 0.3
+    :type    tol: float
+    :param   tol: Convergence tolerance
+    :rtype:  tuple converged, list of numpy.array
+    :return: A tuple with a boolean of convergence, and a list of joint angles. This list will
+             typically only contain one entry.    
+    """
+
+    # from scipy.optimize import lsq_linear
+
+    # R_d, p_d: Desired orientation and position
+    R_d = desired_pose.R
+    p_d = desired_pose.p
+    
+    d_q = q_current
+
+    num_joints = len(robot.joint_type)
+
+    normalize = normalize_joints(robot, q_current, _ignore_limits = True)
+    
+    q_cur = d_q # initial guess on the current joint angles
+    q_cur = q_cur.reshape((num_joints,1)) 
+    
+    # hist_b = []
+    
+    itr = 0 # Iterations
+    converged = False
+    while itr < max_steps and not converged:
+        
+        pose = rox.fwdkin(robot,q_cur.flatten(),_ignore_limits = True)
+        R_cur = pose.R
+        p_cur = pose.p
+        
+        #calculate current Jacobian
+        J0T = rox.robotjacobian(robot,q_cur.flatten(),_ignore_limits = True)
+        
+        # Transform Jacobian to End effector frame from the base frame
+        Tr = np.zeros((6,6))
+        Tr[:3,:3] = R_cur.T 
+        Tr[3:,3:] = R_cur.T
+        J0T = np.matmul(Tr, J0T)
+        
+        ER = np.matmul(np.transpose(R_d),R_cur)
+        
+        EP = np.matmul(R_cur.T,(p_cur - p_d))
+        
+        #decompose ER to (k,theta) pair
+        k, theta = rox.R2rot(ER)                  
+        
+        ## set up s for different norm for ER
+        # s=2*np.dot(k,np.sin(theta)) #eR1
+        # s = np.dot(k,np.sin(theta/2))         #eR2
+        s = np.sin(theta/2) * np.array(k)         #eR2
+        # s=2*theta*k              #eR3
+
+        vd = np.matmul(Kp, EP)
+        wd = np.matmul(KR, s)
+        
+        b = np.concatenate([wd,vd])
+        np.nan_to_num(b, copy=False, nan=0.0, posinf=None, neginf=None)
+        # print(b)
+        # print(J0T)
+        
+        # DEBUG --------------
+        # hist_b.append(b)
+        # if itr > 0:
+        #     error_cur = np.linalg.norm(hist_b[itr-1]) - np.linalg.norm(hist_b[itr])
+            #print("Error= " + str(error_cur))
+        # DEBUG --------------
+
+        # res = lsq_linear(J0T,b)
+        delta = np.matmul(np.linalg.pinv(J0T),b)
+                    
+        # Convergence Check
+        converged = (np.abs(np.hstack((s,EP))) < tol).all()
+
+        if not converged:
+            # Update for next iteration
+            q_cur = q_cur - delta.reshape((num_joints,1))
+
+        itr += 1 # Increase the iteration
+
+
+    q_normed = normalize(np.arange(num_joints), [np.squeeze(q_cur)])
+    print(f"q_cur: {np.rad2deg(q_cur)}, q_normed: {np.rad2deg(q_normed)}")
+
+    return converged, q_normed
