@@ -497,6 +497,5 @@ def iterative_invkin(robot, desired_pose, q_current, max_steps = 200, Kp = 0.3*n
 
 
     q_normed = normalize(np.arange(num_joints), [np.squeeze(q_cur)])
-    print(f"q_cur: {np.rad2deg(q_cur)}, q_normed: {np.rad2deg(q_normed)}")
-
+    
     return converged, q_normed
