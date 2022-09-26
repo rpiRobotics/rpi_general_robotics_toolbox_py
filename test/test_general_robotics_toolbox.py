@@ -341,7 +341,7 @@ def _test_invkin_last_configuration(robot, invkin_func, theta, last_theta):
     pose_1 = rox.fwdkin(robot, theta)
     theta2 = invkin_func(robot, pose_1, last_theta)
     pose_2 = rox.fwdkin(robot, theta2[0])
-    assert pose_1 == pose_2
+    assert pose_1.isclose(pose_2)
     assert np.allclose(theta2[0], last_theta, atol=np.deg2rad(10))
 
 def _test_invkin_random_configuration(robot, invkin_func, iters = 100):
@@ -362,6 +362,34 @@ def _test_invkin_last_random_configuration(robot, invkin_func, iters = 100, join
                                             
         last_theta = theta + (np.random.rand(6)-0.5)*2*np.deg2rad(4)
         _test_invkin_last_configuration(robot, invkin_func, theta, last_theta)
+
+def _test_invkin_iter_configuration(robot, invkin_func, theta, last_theta, tol=1e-6):
+        
+    pose_1 = rox.fwdkin(robot, theta)
+    theta2 = invkin_func(robot, pose_1, last_theta)
+    pose_2 = rox.fwdkin(robot, theta2[0], _ignore_limits = True)
+    assert pose_1.isclose(pose_2, tol)
+    #assert np.allclose(theta2[0], last_theta, atol=np.deg2rad(10))
+
+def _test_invkin_iter_random_configuration(robot, invkin_func, iters = 100, joint_upper_limit = None, joint_lower_limit = None, tol=1e-6):
+    if joint_upper_limit is None:
+        joint_upper_limit = robot.joint_upper_limit
+    if joint_lower_limit is None:
+        joint_lower_limit = robot.joint_lower_limit
+
+    failures = 0
+    for _ in xrange(iters):
+        theta = np.random.rand(6)*(joint_upper_limit - joint_lower_limit - np.deg2rad(30)) \
+            + joint_lower_limit + np.deg2rad(15)
+                                            
+        last_theta = theta + (np.random.rand(6)-0.5)*2*np.deg2rad(4)
+        try:
+            _test_invkin_iter_configuration(robot, invkin_func, theta, last_theta, tol)
+        except:
+            # Ignore if there are a few failures...
+            failures += 1
+            if failures > 5:
+                raise
 
 def test_robot6_sphericalwrist_invkin():
     
@@ -423,6 +451,26 @@ def test_ur5e_invkin():
         theta_test1, theta_test1 + np.deg2rad(4))
                     
     _test_invkin_last_random_configuration(robot, rox.ur_invkin, 100, -np.ones((6,))*np.pi/2., np.ones((6,))*np.pi/2.)
+
+def test_iter_invkin():
+    
+    robot1=puma260b_robot()
+    robot2=abb_irb6640_180_255_robot()
+    robot3=puma260b_robot_tool()
+   
+    def call_invkin(*args, **kwargs):
+        res, q = rox.iterative_invkin(*args, tol=1e-6, **kwargs)
+        assert res
+        return q
+
+    theta_test1 = np.zeros(6)
+    _test_invkin_iter_configuration(robot1, call_invkin, 
+        theta_test1, theta_test1 + np.deg2rad(4), tol=1e-4)
+    _test_invkin_iter_configuration(robot2, call_invkin, 
+        theta_test1 - np.deg2rad(4), np.array([0,0,0,0,0,np.pi*2]), tol=1e-4)
+                    
+    for robot in (robot1,robot2,robot3):
+        _test_invkin_iter_random_configuration(robot, call_invkin, 100, tol=1e-4)
 
 def puma260b_robot():
     """Returns an approximate Robot instance for a Puma 260B robot"""

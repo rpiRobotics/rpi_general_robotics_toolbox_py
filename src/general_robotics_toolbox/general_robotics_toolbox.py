@@ -478,9 +478,14 @@ class Transform(object):
         if self.child_frame_id is not None:
             r.append("child_frame_id = \"" + self.child_frame_id + "\"")
         r.append("\n")        
-        return "\n".join(r)  
+        return "\n".join(r)
+
+    def isclose(self, other, tol=1e-6):
+        #Use "np.isclose" because of numerical accuracy issues
+        return np.all(np.isclose(self.R, other.R, atol=tol)) \
+            and np.all(np.isclose(self.p, other.p, atol=tol))
     
-def fwdkin(robot, theta):
+def fwdkin(robot, theta, _ignore_limits = False):
     """
     Computes the pose of the robot tool flange based on a Robot object
     and the joint angles.
@@ -493,9 +498,11 @@ def fwdkin(robot, theta):
     :return: The Pose of the robot tool flange    
     """    
     
-    if (robot.joint_lower_limit is not None and robot.joint_upper_limit is not None):
-        assert np.greater_equal(theta, robot.joint_lower_limit).all(), "Specified joints out of range"
-        assert np.less_equal(theta, robot.joint_upper_limit).all(), "Specified joints out of range"
+    if not _ignore_limits:
+
+        if (robot.joint_lower_limit is not None and robot.joint_upper_limit is not None):
+            assert np.greater_equal(theta, robot.joint_lower_limit).all(), "Specified joints out of range"
+            assert np.less_equal(theta, robot.joint_upper_limit).all(), "Specified joints out of range"
     
     p = robot.P[:,[0]]
     R = np.identity(3)
@@ -515,7 +522,7 @@ def fwdkin(robot, theta):
     return Transform(R, p)
 
     
-def robotjacobian(robot, theta):
+def robotjacobian(robot, theta, _ignore_limits = False):
     """
     Computes the Jacobian matrix for the robot tool flange based on a Robot object
     and the joint angles.
@@ -528,9 +535,10 @@ def robotjacobian(robot, theta):
     :returns: The 6 x N Jacobian matrix    
     """
     
-    if (robot.joint_lower_limit is not None and robot.joint_upper_limit is not None):
-        assert np.greater_equal(theta, robot.joint_lower_limit).all(), "Specified joints out of range"
-        assert np.less_equal(theta, robot.joint_upper_limit).all(), "Specified joints out of range"
+    if not _ignore_limits:
+        if (robot.joint_lower_limit is not None and robot.joint_upper_limit is not None):
+            assert np.greater_equal(theta, robot.joint_lower_limit).all(), "Specified joints out of range"
+            assert np.less_equal(theta, robot.joint_upper_limit).all(), "Specified joints out of range"
     
     
     hi = np.zeros(robot.H.shape)
