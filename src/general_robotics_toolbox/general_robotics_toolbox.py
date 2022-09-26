@@ -320,7 +320,7 @@ class Robot(object):
     
     
     def __init__(self, H, P, joint_type, joint_lower_limit = None, joint_upper_limit = None, joint_vel_limit = None, joint_acc_limit = None, M = None, \
-                 R_tool=None, p_tool=None, joint_names = None, root_link_name = None, tip_link_name = None):
+                 R_tool=None, p_tool=None, joint_names = None, root_link_name = None, tip_link_name = None, T_flange = None, T_base = None):
         
         """
         Construct a Robot object holding the kinematic information for a single chain robot
@@ -351,6 +351,11 @@ class Robot(object):
         :param root_link_name: A string containing the name of the kinematic chain root link if loaded from URDF. Optional
         :type  tip_link_name: string
         :param tip_link_name: A string containing the name of the kinematic chain tip link if loaded from URDF. Optional
+        :type  T_flange: Transform
+        :param T_flange: Optional transform between end of kinematic chain and the tool frame. This is for compatibility
+                         with ROS tool formats.
+        :type  T_base: Transform
+        :param T_base: Optional transform of base of robot in world frame.
     
         """
         
@@ -409,6 +414,9 @@ class Robot(object):
         self.joint_names = joint_names
         self.root_link_name = root_link_name
         self.tip_link_name = tip_link_name
+
+        self.T_flange = T_flange
+        self.T_base = T_base
         
     
             
@@ -515,11 +523,7 @@ def fwdkin(robot, theta, _ignore_limits = False):
         
     p=np.reshape(p,(3,))
         
-    if robot.R_tool is not None and robot.p_tool is not None:
-        p = p + np.reshape(np.matmul(R,robot.p_tool),(3,))
-        R = np.matmul(R,robot.R_tool)  
-    
-    return Transform(R, p)
+    return apply_robot_aux_transforms(robot,Transform(R, p))
 
     
 def robotjacobian(robot, theta, _ignore_limits = False):
@@ -564,8 +568,12 @@ def robotjacobian(robot, theta, _ignore_limits = False):
     
     pOT = pOi[:,[len(joint_type)]]
     
+    R_flange = robot.T_flange.R if (robot.T_flange is not None) else np.eye(3)
+
+    if robot.T_flange is not None:
+        pOT += np.matmul(R,np.reshape(robot.T_flange.p,(3,1)))
     if robot.p_tool is not None:
-        pOT += np.matmul(R,np.reshape(robot.p_tool,(3,1)))
+        pOT += np.matmul(np.matmul(R,R_flange),np.reshape(robot.p_tool,(3,1)))
     
     J = np.zeros([6,len(joint_type)])
     i = 0
@@ -586,7 +594,12 @@ def robotjacobian(robot, theta, _ignore_limits = False):
         
         i = i + 1
         j = j + 1
-    return J
+
+    if not robot.T_base:
+        return J
+    else:
+        R_J = np.block([[robot.T_base.R, np.zeros((3,3))],[np.zeros((3,3)), robot.T_base.R]])
+        return np.matmul(R_J,J)
 
 
 def subproblem0(p, q, k):
@@ -806,7 +819,52 @@ def subproblem4(p, q, k, d):
     psi = np.arcsin(d)
     
     return [-phi+psi, -phi-psi+np.pi]
-    
+
+
+def apply_robot_aux_transforms(robot, T):
+    """
+    Apply R_tool,p_tool, T_flange, and T_base to T
+
+    :type  robot: Robot
+    :param robot: Robot instance with aux transforms
+    :type  T: Transform
+    :param T: Transform to apply aux transforms
+    :rtype: Transform
+    :return: Returns transform with applied aux transforms
+    """
+
+    T_ret = T
+    if robot.T_flange is not None:
+        T_ret = T_ret * robot.T_flange
+    if robot.R_tool is not None and robot.p_tool is not None:
+        T_ret = T_ret * Transform(robot.R_tool, robot.p_tool)
+    if robot.T_base is not None:
+        T_ret = robot.T_base * T_ret
+
+    return T_ret
+
+def unapply_robot_aux_transforms(robot, T):
+    """
+    Unapply R_tool,p_tool, T_flange, and T_base to T
+
+    :type  robot: Robot
+    :param robot: Robot instance with aux transforms
+    :type  T: Transform
+    :param T: Transform to unapply aux transforms
+    :rtype: Transform
+    :return: Returns transform with unapplied aux transforms
+    """
+
+    T_ret = T
+    if robot.R_tool is not None and robot.p_tool is not None:
+        T_ret = T_ret * Transform(robot.R_tool, robot.p_tool).inv()
+    if robot.T_flange is not None:
+        T_ret = T_ret * robot.T_flange.inv()
+    if robot.T_base is not None:
+        T_ret = robot.T_base.inv() * T_ret
+
+    return T_ret
+
 def random_R():
     q=np.random.rand(4)
     q=q/np.linalg.norm(q)
