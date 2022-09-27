@@ -158,8 +158,16 @@ def load_robot_info_yaml_to_robot(robot_info_file, chain_number=0):
             if tool_device_info is not None:
                 tip_link_name = _identifier_name(tool_device_info["device"])
 
+    T_base = None
+    robot_device_info = robot_yml.get("device_info", None)
+    if robot_device_info is not None:
+        robot_origin_pose = robot_device_info.get("device_origin_pose", None)
+        if robot_origin_pose is not None:
+            T_base = _to_transform(robot_origin_pose["pose"])
+
     rox_robot = rox.Robot(H, P, joint_type, joint_lower_limit, joint_upper_limit, joint_vel_limit,
-                          joint_acc_limit, None, r_tool, p_tool, joint_names, root_link_name, tip_link_name, T_flange=T_flange)
+                          joint_acc_limit, None, r_tool, p_tool, joint_names, root_link_name, tip_link_name,  
+                          T_flange=T_flange, T_base = T_base)
 
     return rox_robot
 

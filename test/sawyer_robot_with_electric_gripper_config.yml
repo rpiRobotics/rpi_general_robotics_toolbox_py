@@ -7,6 +7,17 @@ device_info:
   model:
     name: Sawyer
     uuid: f965af3f-da91-41d7-be0f-871207c2185d
+  device_origin_pose:
+    pose:
+      orientation:
+        w: 0.707107
+        x: 0
+        y: 0
+        z: -0.707107
+      position:
+        x: 0.5
+        y: 0.23
+        z: 0.8
   user_description: Rethink Robotics Sawyer Robot
   serial_number: 123456789
   device_classes:

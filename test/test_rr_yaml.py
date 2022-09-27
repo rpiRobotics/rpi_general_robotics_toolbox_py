@@ -45,10 +45,10 @@ def test_robotinfo_yaml_loader_abb1200():
 def test_robotinfo_yaml_loader_sawyer_with_tool():
     with open(_get_absolute_path("sawyer_robot_with_electric_gripper_config.yml"), "r") as f:
         robot = rr_rox.load_robot_info_yaml_to_robot(f)
-    _assert_sawyer_robot(robot)
+    _assert_sawyer_robot(robot, T_base_expected=rox.Transform(rox.rot([0,0,1],-np.pi/2), [0.5, 0.23, 0.8]))
 
 
-def _assert_sawyer_robot(robot):
+def _assert_sawyer_robot(robot, T_base_expected = None):
 
     nptest.assert_allclose(robot.H, np.transpose(
         [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 1, 0], [1, 0, 0]]), atol=1e-4)
@@ -74,7 +74,10 @@ def _assert_sawyer_robot(robot):
     nptest.assert_allclose(robot.R_tool, rox.rot(
         [0, 0, 1], np.deg2rad(5)), atol=1e-4)
     nptest.assert_allclose(robot.p_tool, [0, 0, 0.1577], atol=1e-4)
-    assert robot.T_base is None
+    if T_base_expected is None:
+        assert robot.T_base is None
+    else:
+        assert T_base_expected.isclose(robot.T_base, tol=1e-4)
     nptest.assert_allclose(rox.R2q(
         robot.T_flange.R), [-0.45451851, 0.54167662, -0.45452185, 0.54167264], atol=1e-4)
     nptest.assert_allclose(robot.T_flange.p, [0, 0, 0])
