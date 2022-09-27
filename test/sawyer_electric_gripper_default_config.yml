@@ -1,0 +1,44 @@
+device_info:
+  device:
+    name: sawyer_electric_gripper
+  manufacturer:
+    name: Rethink_Robotics
+    uuid: 82d22757-bbfc-44ca-9edb-8824c4a1943e
+  model:
+    name: Sawyer_Electric_Gripper
+    uuid: f9521686-6acc-4718-a637-f276463bfc3c
+  user_description: Rethink Robotics Sawyer Electric Gripper
+  serial_number: 123456789
+  device_classes:
+    - class_identifier:
+        name: gripper
+        uuid: ee974ee5-a5de-49c4-8fe6-831df8f2821c
+      subclasses: 
+        - electric
+  implemented_types:
+    - com.robotraconteur.robotics.tool.Tool
+tool_type: electric_gripper
+tool_capabilities:
+- open_close_command
+- continuous_command
+- homing_command
+tcp:
+  translation:
+    x: 0
+    y: 0
+    z: 0.1577
+  rotation:
+    x: 0
+    y: 0
+    z: 0.043619
+    w: 0.999048
+close_position: 0
+open_position: 0.041667
+command_min: 0
+command_max: 0.041667
+command_close: 0
+command_open: 0.041667
+sensor_min:
+  - 0
+sensor_max:
+  - 100
