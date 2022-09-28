@@ -315,7 +315,9 @@ class Robot(object):
     :attribute joint_names: A list of N strings containing the names of the joints if loaded from URDF. Optional
     :attribute root_link_name: A string containing the name of the kinematic chain root link if loaded from URDF. Optional
     :attribute tip_link_name: A string containing the name of the kinematic chain tip link if loaded from URDF. Optional
-    
+    :attribute T_flange: Optional transform between end of kinematic chain and the tool frame. This is for compatibility
+                        with ROS tool formats.
+    :attribute T_base: Optional transform of base of robot in world frame.
     """
     
     
@@ -864,6 +866,10 @@ def unapply_robot_aux_transforms(robot, T):
         T_ret = robot.T_base.inv() * T_ret
 
     return T_ret
+
+def identity_transform():
+    """Returns an identity transform"""
+    return Transform(np.eye(3,dtype=np.float64),np.zeros((3,),dtype=np.float64))
 
 def random_R():
     q=np.random.rand(4)
