@@ -195,3 +195,125 @@ def test_kinematics_plugin_info_string_sawyer():
     '  - tesseract_kinematics_kdl_factories\n'
 
     assert kin_plugin_info == kin_plugin_info_expected
+
+def test_opw_invkin_params_abb1200():
+    with open(_get_absolute_path("abb_1200_5_90_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    opw_params = rox_tesseract.robot_to_opw_inv_kin_parameters(robot)
+
+    assert opw_params.a1 == 0.0
+    assert opw_params.a2 == -0.042
+    assert opw_params.b == 0.0
+    assert opw_params.c1 == 0.3991
+    assert opw_params.c2 == 0.448
+    assert opw_params.c3 == 0.451
+    assert opw_params.c4 == 0.082
+    nptest.assert_allclose(opw_params.offsets, np.deg2rad([0,0,-90,0,0,0]))
+    nptest.assert_allclose(opw_params.sign_corrections, np.ones((6,)))
+
+def test_opw_invkin_params_rp260():
+    with open(_get_absolute_path("rp260_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    opw_params = rox_tesseract.robot_to_opw_inv_kin_parameters(robot)
+
+    print(opw_params)
+
+    assert opw_params.a1 == 0.0
+    assert opw_params.a2 == 0.0
+    assert opw_params.b == -0.12446
+    assert opw_params.c1 == 0.3302
+    assert opw_params.c2 == 0.199034
+    assert opw_params.c3 == 0.2032
+    assert opw_params.c4 == 0.0635
+
+    nptest.assert_allclose(opw_params.offsets, np.deg2rad([0,-95.49232456,5.49232456,0,0,0]))
+    nptest.assert_allclose(opw_params.sign_corrections, np.ones((6,)))
+
+def test_kinematics_plugin_info_string_abb1200():
+    with open(_get_absolute_path("abb_1200_5_90_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    sg, link_names, joint_names, chain_link_names = rox_tesseract.robot_to_scene_graph(robot,True)
+
+    kin_plugin_info = rox_tesseract.kinematics_plugin_info_string(robot, "my_robot", link_names, joint_names, chain_link_names,
+        "OPWInvKin")
+
+    kin_plugin_info_expected = 'kinematic_plugins:\n  fwd_kin_plugins:\n    my_robot:\n      default: KDLFwdKinChain\n' \
+    '      plugins:\n        KDLFwdKinChain:\n          class: KDLFwdKinChainFactory\n          config:\n' \
+    '            base_link: base_link\n            tip_link: flange\n  inv_kin_plugins:\n    my_robot:\n' \
+    '      default: OPWInvKin\n      plugins:\n        OPWInvKin:\n          class: OPWInvKinFactory\n' \
+    '          config:\n            base_link: base_link\n            params:\n              a1: 0.0\n' \
+    '              a2: -0.042\n              b: 0.0\n              c1: 0.3991\n              c2: 0.448\n' \
+    '              c3: 0.451\n              c4: 0.082\n              offsets:\n              - 0.0\n' \
+    '              - 0.0\n              - -1.57079633\n              - 0.0\n              - 0.0\n' \
+    '              - 0.0\n              sign_corrections:\n              - 1.0\n              - 1.0\n' \
+    '              - 1.0\n              - 1.0\n              - 1.0\n              - 1.0\n' \
+    '            tip_link: flange\n  search_libraries:\n  - tesseract_kinematics_opw_factories\n' \
+    '  - tesseract_kinematics_kdl_factories\n'
+
+    assert kin_plugin_info == kin_plugin_info_expected
+
+def test_opw_inv_kin_params_abb1200():
+
+    with open(_get_absolute_path("abb_1200_5_90_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_env_commands = rox_tesseract.robot_to_tesseract_env_commands(robot, "robot", invkin_solver="OPWInvKin")
+    env = Environment()
+    assert env.init(tesseract_env_commands)
+
+    # kin_info = env.getKinematicsInformation()
+    kin_group = env.getKinematicGroup("robot")
+    assert kin_group is not None
+
+    q = np.ones((6,),dtype=np.float64)*np.deg2rad(15)
+    fwdkin_res = kin_group.calcFwdKin(q)
+    tcp_pose = fwdkin_res["robot_flange"]
+    
+    ik = KinGroupIKInput()
+    ik.pose = tcp_pose
+    ik.tip_link_name = "robot_flange"
+    ik.working_frame = "world"
+    iks = KinGroupIKInputs()
+    iks.append(ik)
+
+    invkin1 = kin_group.calcInvKin(iks,q*0.8)
+
+    fwdkin_res2 = kin_group.calcFwdKin(invkin1[0])
+    tcp_pose2 = fwdkin_res2["robot_flange"]
+
+    nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.5))
+    nptest.assert_allclose(tcp_pose.matrix(), tcp_pose2.matrix())
+
+def test_opw_inv_kin_params_rp260():
+
+    with open(_get_absolute_path("rp260_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_env_commands = rox_tesseract.robot_to_tesseract_env_commands(robot, "robot", invkin_solver="OPWInvKin")
+    env = Environment()
+    assert env.init(tesseract_env_commands)
+
+    # kin_info = env.getKinematicsInformation()
+    kin_group = env.getKinematicGroup("robot")
+    assert kin_group is not None
+
+    q = np.ones((6,),dtype=np.float64)*np.deg2rad(15)
+    fwdkin_res = kin_group.calcFwdKin(q)
+    tcp_pose = fwdkin_res["robot_flange"]
+    
+    ik = KinGroupIKInput()
+    ik.pose = tcp_pose
+    ik.tip_link_name = "robot_flange"
+    ik.working_frame = "world"
+    iks = KinGroupIKInputs()
+    iks.append(ik)   
+    invkin1 = kin_group.calcInvKin(iks,q*0.8)
+    
+    fwdkin_res2 = kin_group.calcFwdKin(invkin1[0])
+    tcp_pose2 = fwdkin_res2["robot_flange"]
+
+    nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.1))
+    nptest.assert_allclose(tcp_pose.matrix(), tcp_pose2.matrix(), atol=1e-5)
