@@ -1,3 +1,9 @@
+import sys
+
+if sys.version_info < (3,6):
+    raise Exception("Python version 3.6 or higher required for Tesseract")
+
+
 import numpy as np
 from . import general_robotics_toolbox as rox
 
