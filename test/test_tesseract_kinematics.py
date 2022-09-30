@@ -32,12 +32,14 @@ def _assert_rox_eig_transform_close(T, eig_iso):
 
 def test_transform_to_isometry3d():
     T = rox.random_transform()
-    eig_iso = rox_tesseract._transform_to_isometry3d(T)
+    eig_iso = rox_tesseract.transform_to_isometry3d(T)
     _assert_rox_eig_transform_close(T, eig_iso)
+    T2 = rox_tesseract.isometry3d_to_transform(eig_iso)
+    assert T.isclose(T2)
 
 def test_get_fixed_link_command():
     T = rox.random_transform()
-    link, joint = rox_tesseract._get_fixed_link_and_joint(T, "my_link", "my_joint", "my_parent_link")
+    link, joint = rox_tesseract.get_fixed_link_and_joint(T, "my_link", "my_joint", "my_parent_link")
     assert link.getName() == "my_link"
     assert joint.parent_link_name == "my_parent_link"
     assert joint.child_link_name == "my_link"
@@ -49,7 +51,7 @@ def test_get_link_command():
     h = rox.random_p()
     h = h/np.linalg.norm(h)
 
-    link, joint = rox_tesseract._get_link_and_joint(h, p, 0, -np.rad2deg(24), np.rad2deg(34),
+    link, joint = rox_tesseract.get_link_and_joint(h, p, 0, -np.rad2deg(24), np.rad2deg(34),
         7.92, 8.92, 6.432, "my_link4", "my_joint8", "my_link3")
 
     assert link.getName() == "my_link4"

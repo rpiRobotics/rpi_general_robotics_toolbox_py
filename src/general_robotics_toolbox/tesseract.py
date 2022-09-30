@@ -13,11 +13,17 @@ from tesseract_robotics.tesseract_srdf import KinematicsInformation, parseKinema
 import yaml
 import io
 
-def _transform_to_isometry3d(T):
+def transform_to_isometry3d(T):
     # TODO: Use better Isometry3d constructor
     return Translation3d(T.p) * AngleAxisd(T.R)
 
-def _get_link_and_joint(h, p, joint_type, joint_lower_limit, joint_upper_limit, joint_vel_limit,
+def isometry3d_to_transform(eig_iso):
+    H = eig_iso.matrix()
+    R = H[0:3,0:3]
+    p = H[0:3,3].flatten()
+    return rox.Transform(R,p)
+
+def get_link_and_joint(h, p, joint_type, joint_lower_limit, joint_upper_limit, joint_vel_limit,
     joint_acc_limit, joint_effort_limit, link_name, joint_name, parent_link_name):
     
     link = Link(link_name)
@@ -29,7 +35,7 @@ def _get_link_and_joint(h, p, joint_type, joint_lower_limit, joint_upper_limit, 
         joint.type = JointType_PRISMATIC
     else:
         assert False, "Unsupported Tesseract joint type: " + str(joint.type)
-    joint.parent_to_joint_origin_transform = _transform_to_isometry3d(rox.Transform(np.eye(3), p))
+    joint.parent_to_joint_origin_transform = transform_to_isometry3d(rox.Transform(np.eye(3), p))
     joint.axis = h
     joint.parent_link_name = parent_link_name
     joint.child_link_name = link_name
@@ -37,22 +43,22 @@ def _get_link_and_joint(h, p, joint_type, joint_lower_limit, joint_upper_limit, 
          joint_vel_limit, joint_acc_limit)
     return link,joint
 
-def _get_fixed_link_and_joint(T, link_name, joint_name, parent_link_name):
+def get_fixed_link_and_joint(T, link_name, joint_name, parent_link_name):
     link = Link(link_name)
     joint = Joint(joint_name)
 
     joint.type = JointType_FIXED
-    joint.parent_to_joint_origin_transform = _transform_to_isometry3d(T)
+    joint.parent_to_joint_origin_transform = transform_to_isometry3d(T)
     joint.parent_link_name = parent_link_name
     joint.child_link_name = link_name
     return link,joint
 
-def _get_robot_world_to_base_joint(robot, robot_name):
+def get_robot_world_to_base_joint(robot, robot_name):
     joint = Joint(f"world_to_{robot_name}")
 
     joint.type = JointType_FIXED
     if robot.T_base:
-        joint.parent_to_joint_origin_transform = _transform_to_isometry3d(robot.T_base)
+        joint.parent_to_joint_origin_transform = transform_to_isometry3d(robot.T_base)
     else:
         joint.parent_to_joint_origin_transform = Isometry3d()
     joint.parent_link_name = "world"
@@ -88,13 +94,13 @@ def robot_to_scene_graph(robot, return_names = False):
         else:
             parent_link_name = link_names[i-1]
         
-        assert sg.addLink(*_get_link_and_joint(robot.H[:,i], robot.P[:,i], robot.joint_type[i], 
+        assert sg.addLink(*get_link_and_joint(robot.H[:,i], robot.P[:,i], robot.joint_type[i], 
             robot.joint_lower_limit[i], robot.joint_upper_limit[i], robot.joint_vel_limit[i], 
             robot.joint_acc_limit[i], 1000.0, link_names[i], joint_names[i],
             parent_link_name))
         sg_link_names.append(link_names[i])
     
-    assert sg.addLink(*_get_fixed_link_and_joint(rox.Transform(np.eye(3), robot.P[:,n_joints]), 
+    assert sg.addLink(*get_fixed_link_and_joint(rox.Transform(np.eye(3), robot.P[:,n_joints]), 
         "chain_tip", link_names[n_joints-1] + "_to_chain_tip", link_names[n_joints-1]))
     sg_link_names.append("chain_tip")
 
@@ -103,7 +109,7 @@ def robot_to_scene_graph(robot, return_names = False):
     flange_link_name = "flange"
 
     if robot.T_flange is not None:
-        assert sg.addLink(*_get_fixed_link_and_joint(robot.T_flange,
+        assert sg.addLink(*get_fixed_link_and_joint(robot.T_flange,
             flange_link_name, "tip_to_flange", tip_link))
 
         tip_link = flange_link_name
@@ -112,7 +118,7 @@ def robot_to_scene_graph(robot, return_names = False):
     tool_link_name = "tool_tcp"
 
     if robot.R_tool is not None and robot.p_tool is not None:
-        assert sg.addLink(*_get_fixed_link_and_joint(rox.Transform(robot.R_tool, robot.p_tool),
+        assert sg.addLink(*get_fixed_link_and_joint(rox.Transform(robot.R_tool, robot.p_tool),
             tool_link_name, "tip_to_tool", tip_link))
 
         tip_link = tool_link_name
@@ -163,7 +169,7 @@ def robot_to_tesseract_env_commands(robot, robot_name = "robot", include_world =
         commands.append(AddSceneGraphCommand(world_sg))
 
     robot_sg, sg_link_names, sg_joint_names, sg_chain_link_names = robot_to_scene_graph(robot, return_names = True)
-    robot_base_joint = _get_robot_world_to_base_joint(robot, robot_name)
+    robot_base_joint = get_robot_world_to_base_joint(robot, robot_name)
     commands.append(AddSceneGraphCommand(robot_sg, robot_base_joint, f"{robot_name}_"))
 
     link_names = _prefix_names(sg_link_names, robot_name)
