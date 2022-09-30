@@ -162,7 +162,8 @@ def test_robot_to_tesseract_env_commands_and_kin_sawyer():
      'sawyer_link_7', 'sawyer_chain_tip', 'sawyer_flange', 'sawyer_tool_tcp'])
 
     q = np.ones((7,),dtype=np.float64)*np.deg2rad(15)
-    tcp_pose = kin_group.calcFwdKin(q)["sawyer_tool_tcp"]
+    fwdkin_res = kin_group.calcFwdKin(q)
+    tcp_pose = fwdkin_res["sawyer_tool_tcp"]
     
     ik = KinGroupIKInput()
     ik.pose = tcp_pose
@@ -171,9 +172,11 @@ def test_robot_to_tesseract_env_commands_and_kin_sawyer():
     iks = KinGroupIKInputs()
     iks.append(ik)
 
-    invkin1 = kin_group.calcInvKin(iks,q*0.8)
-
-    nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.5))
+    invkin1 = kin_group.calcInvKin(iks,q*0.7)
+    fwdkin_res2 = kin_group.calcFwdKin(invkin1[0])
+    tcp_pose2 = fwdkin_res2["sawyer_tool_tcp"]
+    # nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.5))
+    nptest.assert_allclose(tcp_pose.matrix(), tcp_pose2.matrix(), atol=1e-3)
 
 
 def test_kinematics_plugin_info_string_sawyer():
@@ -248,8 +251,8 @@ def test_kinematics_plugin_info_string_abb1200():
     '              a2: -0.042\n              b: 0.0\n              c1: 0.3991\n              c2: 0.448\n' \
     '              c3: 0.451\n              c4: 0.082\n              offsets:\n              - 0.0\n' \
     '              - 0.0\n              - -1.57079633\n              - 0.0\n              - 0.0\n' \
-    '              - 0.0\n              sign_corrections:\n              - 1.0\n              - 1.0\n' \
-    '              - 1.0\n              - 1.0\n              - 1.0\n              - 1.0\n' \
+    '              - 0.0\n              sign_corrections:\n              - 1\n              - 1\n' \
+    '              - 1\n              - 1\n              - 1\n              - 1\n' \
     '            tip_link: flange\n  search_libraries:\n  - tesseract_kinematics_opw_factories\n' \
     '  - tesseract_kinematics_kdl_factories\n'
 
@@ -317,3 +320,39 @@ def test_opw_inv_kin_params_rp260():
 
     nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.1))
     nptest.assert_allclose(tcp_pose.matrix(), tcp_pose2.matrix(), atol=1e-5)
+
+def test_robot_to_tesseract_env_and_kin_sawyer():
+    with open(_get_absolute_path("sawyer_robot_with_electric_gripper_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    env = rox_tesseract.robot_to_tesseract_env(robot, "sawyer")
+
+    # kin_info = env.getKinematicsInformation()
+    kin_group = env.getKinematicGroup("sawyer")
+    kin_group_joint_names = kin_group.getJointNames()
+    kin_group_link_names = kin_group.getLinkNames()
+
+
+    assert set(kin_group_joint_names) == set(['sawyer_right_j0', 'sawyer_right_j1', 'sawyer_right_j2', 'sawyer_right_j3', 
+        'sawyer_right_j4', 'sawyer_right_j5', 'sawyer_right_j6'])
+
+    assert set(kin_group_link_names) == set(['sawyer_link_5', 'sawyer_base_link', 'world', 'sawyer_link_1',
+     'sawyer_link_2', 'sawyer_link_3', 'sawyer_link_4', 'sawyer_link_6',
+     'sawyer_link_7', 'sawyer_chain_tip', 'sawyer_flange', 'sawyer_tool_tcp'])
+
+    q = np.ones((7,),dtype=np.float64)*np.deg2rad(15)
+    fwdkin_res = kin_group.calcFwdKin(q)
+    tcp_pose = fwdkin_res["sawyer_tool_tcp"]
+    
+    ik = KinGroupIKInput()
+    ik.pose = tcp_pose
+    ik.tip_link_name = "sawyer_tool_tcp"
+    ik.working_frame = "world"
+    iks = KinGroupIKInputs()
+    iks.append(ik)
+
+    invkin1 = kin_group.calcInvKin(iks,q*0.7)
+    fwdkin_res2 = kin_group.calcFwdKin(invkin1[0])
+    tcp_pose2 = fwdkin_res2["sawyer_tool_tcp"]
+    # nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.5))
+    nptest.assert_allclose(tcp_pose.matrix(), tcp_pose2.matrix(), atol=1e-3)
