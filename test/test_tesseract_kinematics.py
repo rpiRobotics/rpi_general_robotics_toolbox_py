@@ -155,9 +155,9 @@ def test_robot_to_tesseract_env_commands_and_kin_sawyer():
     assert set(kin_group_joint_names) == set(['sawyer_right_j0', 'sawyer_right_j1', 'sawyer_right_j2', 'sawyer_right_j3', 
         'sawyer_right_j4', 'sawyer_right_j5', 'sawyer_right_j6'])
 
-    assert set(kin_group_link_names) == set(['sawyer_link_5', 'sawyer_base_link', 'world', 'sawyer_link_1', 
-        'sawyer_link_0', 'sawyer_link_2', 'sawyer_link_3', 'sawyer_link_4', 'sawyer_link_6', 'sawyer_link_7',
-        'sawyer_flange', 'sawyer_tool_tcp'])
+    assert set(kin_group_link_names) == set(['sawyer_link_5', 'sawyer_base_link', 'world', 'sawyer_link_1',
+     'sawyer_link_2', 'sawyer_link_3', 'sawyer_link_4', 'sawyer_link_6',
+     'sawyer_link_7', 'sawyer_chain_tip', 'sawyer_flange', 'sawyer_tool_tcp'])
 
     q = np.ones((7,),dtype=np.float64)*np.deg2rad(15)
     tcp_pose = kin_group.calcFwdKin(q)["sawyer_tool_tcp"]
@@ -169,7 +169,7 @@ def test_robot_to_tesseract_env_commands_and_kin_sawyer():
     iks = KinGroupIKInputs()
     iks.append(ik)
 
-    invkin1 = kin_group.calcInvKin(iks,q*0.7)
+    invkin1 = kin_group.calcInvKin(iks,q*0.8)
 
     nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.5))
 
@@ -187,9 +187,9 @@ def test_kinematics_plugin_info_string_sawyer():
     '      plugins:\n        KDLFwdKinChain:\n          class: KDLFwdKinChainFactory\n          config:\n' \
     '            base_link: base_link\n            tip_link: tool_tcp\n  inv_kin_plugins:\n    my_robot:\n' \
     '      default: KDLInvKinChainNR\n      plugins:\n        KDLInvKinChainLMA:\n' \
-    '          class: KDLInvKinChainLMAFactory\n          config:\n            base_link: link_0\n' \
-    '            tip_link: link_7\n        KDLInvKinChainNR:\n          class: KDLInvKinChainNRFactory\n' \
-    '          config:\n            base_link: link_0\n            tip_link: link_7\n  search_libraries:\n' \
+    '          class: KDLInvKinChainLMAFactory\n          config:\n            base_link: base_link\n' \
+    '            tip_link: tool_tcp\n        KDLInvKinChainNR:\n          class: KDLInvKinChainNRFactory\n' \
+    '          config:\n            base_link: base_link\n            tip_link: tool_tcp\n  search_libraries:\n' \
     '  - tesseract_kinematics_kdl_factories\n'
 
     assert kin_plugin_info == kin_plugin_info_expected
