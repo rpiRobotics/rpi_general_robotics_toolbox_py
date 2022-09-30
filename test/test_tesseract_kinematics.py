@@ -356,3 +356,47 @@ def test_robot_to_tesseract_env_and_kin_sawyer():
     tcp_pose2 = fwdkin_res2["sawyer_tool_tcp"]
     # nptest.assert_allclose(q, invkin1[0].flatten(), atol=np.deg2rad(0.5))
     nptest.assert_allclose(tcp_pose.matrix(), tcp_pose2.matrix(), atol=1e-3)
+
+def _assert_tesseract_kinematics(robot, tesseract_robot):
+    q_s1 = np.array([0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97])
+    q_s = q_s1[0:len(robot.joint_type)]
+    for qi in (15, 30, -23, 40):
+        q = q_s*np.deg2rad(qi)
+        T1 = rox.fwdkin(robot, q)
+        T2 = tesseract_robot.fwdkin(q)
+
+        assert T1.isclose(T2)
+
+        J1 = rox.robotjacobian(robot, q)
+        J2 = tesseract_robot.jacobian(q)
+        nptest.assert_allclose(J1,J2,atol=1e-6)
+
+        q_ik = tesseract_robot.invkin(T1, q*0.1)
+        for q_ik_i in q_ik:
+            T_ik = rox.fwdkin(robot,q_ik_i)
+            # KDL invkin solver has low accuracy
+            assert T1.isclose(T_ik,tol=1e-3)
+
+def test_tesseract_robot_abb1200():
+    with open(_get_absolute_path("abb_1200_5_90_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot", invkin_solver="OPWInvKin")
+
+    _assert_tesseract_kinematics(robot, tesseract_robot)
+
+def test_tesseract_robot_rp260():
+    with open(_get_absolute_path("rp260_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot", invkin_solver="OPWInvKin")
+
+    _assert_tesseract_kinematics(robot, tesseract_robot)
+
+def test_tesseract_robot_sawyer():
+    with open(_get_absolute_path("sawyer_robot_with_electric_gripper_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot")
+
+    _assert_tesseract_kinematics(robot, tesseract_robot)

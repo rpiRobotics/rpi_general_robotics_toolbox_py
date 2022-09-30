@@ -197,7 +197,10 @@ def robot_to_tesseract_env_commands(robot, robot_name = "robot", include_world =
     if not return_names:
         return commands
     else:
-        return commands, link_names, joint_names
+        if include_world:
+            return commands, ["world"] + link_names, joint_names
+        else:
+            return commands, link_names, joint_names
 
 def kinematics_plugin_fwdkin_kdl_plugin_info_dict(robot_name, base_link, tip_link):
     plugin_info = {        
@@ -444,3 +447,75 @@ def robot_to_tesseract_env(robot, robot_name = "robot", include_world = True, re
         return env
     else:
         return env, link_names, joint_names
+
+
+class TesseractRobot:
+    def __init__(self, robot = None, robot_name = "robot", invkin_solver = "KDLInvKinChainLMA", tesseract_env = None):
+        assert robot or tesseract_env
+        assert not (robot  and tesseract_env)
+
+        self.robot_name = robot_name
+
+        if robot is not None:
+            self.tesseract_env, link_names, joint_names = robot_to_tesseract_env(robot, robot_name, True, True, 
+                invkin_solver)
+            self.base_link_name = link_names[0]
+            self.tip_link_name = link_names[-1]
+        else:
+            self.tesseract_env = tesseract_env
+            kin_grp = self.tesseract_env.getKinematicGroup(robot_name)
+            self.base_link_name = kin_grp.getBaseLinkName()
+            self.tip_link_name = kin_grp.getAllPossibleTipLinkNames()[0]
+    
+    def fwdkin(self, theta, base_link_name = None, tip_link_name = None):
+        kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
+        frames = kin_group.calcFwdKin(theta)
+
+        if tip_link_name is None:
+            tip_link_name = self.tip_link_name
+
+        tip_link = frames[tip_link_name]
+
+        if base_link_name is None:
+            return isometry3d_to_transform(tip_link)
+        else:
+            base_link = frames[base_link_name]
+
+            res = base_link.inverse() * tip_link
+            return isometry3d_to_transform(res)
+
+    def jacobian(self, theta, base_link_name = None, link_name = None):
+        kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
+        if base_link_name is None:
+            base_link_name = self.base_link_name
+        if link_name is None:
+            link_name = self.tip_link_name
+
+        J_kdl =  kin_group.calcJacobian(theta, base_link_name, link_name)
+
+        # KDL has vel on top, SOA has ang on top
+        J = np.vstack((J_kdl[3:6,:],J_kdl[0:3,:]))
+        return J
+
+    def invkin(self, tip_link_pose, theta_seed, base_link_name = None, tip_link_name = None):
+        kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
+        if base_link_name is None:
+            base_link_name = self.base_link_name
+        if tip_link_name is None:
+            tip_link_name = self.tip_link_name
+        ik = KinGroupIKInput()
+        ik.pose = transform_to_isometry3d(tip_link_pose)
+        ik.tip_link_name = tip_link_name
+        ik.working_frame = base_link_name
+        iks = KinGroupIKInputs()
+        iks.append(ik)
+
+        invkin1= kin_group.calcInvKin(iks,theta_seed)
+
+        ret = []
+        for i in range(len(invkin1)):
+            ret.append(invkin1[i].flatten())
+        return ret
+
+
+            
