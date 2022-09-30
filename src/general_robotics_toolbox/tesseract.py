@@ -431,13 +431,16 @@ def kinematics_plugin_invkin_opw_plugin_info_dict(robot_name, base_link, tip_lin
 
     return plugin_info, ["tesseract_kinematics_opw_factories"]
 
-def robot_to_tesseract_env(robot, robot_name = "robot", include_world = True, 
+def robot_to_tesseract_env(robot, robot_name = "robot", include_world = True, return_names = False, 
     invkin_solver = None, invkin_plugin_info = None):
 
-    tesseract_env_commands = robot_to_tesseract_env_commands(robot, robot_name, include_world, False, invkin_solver, 
-        invkin_plugin_info)
+    tesseract_env_commands, link_names, joint_names = robot_to_tesseract_env_commands(robot, 
+        robot_name, include_world, True, invkin_solver, invkin_plugin_info)
 
     env = Environment()
     assert env.init(tesseract_env_commands)
 
-    return env
+    if not return_names:
+        return env
+    else:
+        return env, link_names, joint_names
