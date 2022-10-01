@@ -277,7 +277,9 @@ def kinematics_plugin_info_dict(robot, robot_name, link_names, joint_names, chai
             invkin_plugin_info, invkin_libs = kinematics_plugin_invkin_opw_plugin_info_dict(robot_name, base_link,
                 tip_link, opw_params)
         elif invkin_solver == "URInvKin":
-            assert False, "URInvKin not implemented"
+            ur_params = robot_to_ur_inv_kin_parameters(robot)
+            invkin_plugin_info, invkin_libs = kinematics_plugin_invkin_ur_plugin_info_dict(robot_name, base_link,
+                tip_link, ur_params)
         else:
             assert False, "Unknown inverse kinematics solver"
 
@@ -517,5 +519,83 @@ class TesseractRobot:
             ret.append(invkin1[i].flatten())
         return ret
 
+class URInvKinParameters(NamedTuple):
+    d1: float
+    a2: float
+    a3: float
+    d4: float
+    d5: float
+    d6: float
 
-            
+def robot_to_ur_inv_kin_parameters(robot):
+    """
+    Convert "Robot" structure to Universal Robots DH parameters for inverse kinematics.
+    Determines d1, a2, a3, d4, d5, d6
+
+    See https://www.universal-robots.com/articles/ur/application-installation/dh-parameters-for-calculations-of-kinematics-and-dynamics/
+    for more details.
+
+    Robot must be aligned with +x or -x. Factory definition is along -x. URDF definition is along +x, rotated 180
+    degrees from factory home position.
+    """
+
+    ex = np.array([1.,0.,0.])
+    ey = np.array([0.,1.,0.])
+    ez = np.array([0.,0.,1.])
+
+    minus_x = np.allclose(robot.H, np.array([ez,-ey,-ey,-ey,-ez,-ey]).T)
+    plus_x = np.allclose(robot.H, -np.array([ez,-ey,-ey,-ey,-ez,-ey]).T)
+
+    P2 = robot.P
+
+    assert minus_x or plus_x
+
+    if plus_x:
+        R = rox.rot(ez,np.pi)
+        P2 = np.matmul(R, P2)
+
+    assert np.allclose(P2[0:2,0], 0.0)
+    d1 = P2[2,0].item()
+
+    assert np.allclose(P2[0,1], 0.0)
+    assert np.allclose(P2[2,1:4], 0.0)
+    a2 = P2[0,2].item()
+    a3 = P2[0,3].item()
+    assert np.allclose(P2[0,4:], 0.0)
+    d4 = -np.sum(P2[1,1:5]).item()
+    d5 = -np.sum(P2[2,4:5]).item()
+    assert np.allclose(P2[2,5:], 0.0)
+    assert np.allclose(P2[0,5:], 0.0)
+    d6 = -np.sum(P2[1,5:6]).item()
+
+    ret = URInvKinParameters(d1,a2,a3,d4,d5,d6)
+
+    return ret
+
+def kinematics_plugin_invkin_ur_plugin_info_dict(robot_name, base_link, tip_link, ur_params):
+    plugin_info = {
+        "inv_kin_plugins": {
+            robot_name: {
+                "default": "URInvKin",
+                "plugins": {
+                    "URInvKin": {
+                        "class": "URInvKinFactory",
+                        "config": {
+                            "base_link": base_link,
+                            "tip_link": tip_link,
+                            "params": {
+                                "d1": ur_params.d1,
+                                "a2": ur_params.a2,
+                                "a3": ur_params.a3,
+                                "d4": ur_params.d4,
+                                "d5": ur_params.d5,
+                                "d6": ur_params.d6
+                            }
+                        }
+                    },
+                }
+            }
+        }        
+    }
+
+    return plugin_info, ["tesseract_kinematics_ur_factories"]

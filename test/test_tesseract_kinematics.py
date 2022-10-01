@@ -372,6 +372,7 @@ def _assert_tesseract_kinematics(robot, tesseract_robot):
         nptest.assert_allclose(J1,J2,atol=1e-6)
 
         q_ik = tesseract_robot.invkin(T1, q*0.1)
+        assert len(q_ik) > 0
         for q_ik_i in q_ik:
             T_ik = rox.fwdkin(robot,q_ik_i)
             # KDL invkin solver has low accuracy
@@ -398,5 +399,25 @@ def test_tesseract_robot_sawyer():
         robot = rr_rox.load_robot_info_yaml_to_robot(f)
 
     tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot")
+
+    _assert_tesseract_kinematics(robot, tesseract_robot)
+
+def test_ur_inv_kin_params_ur5e():
+    with open(_get_absolute_path("ur5e_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+    ur_params = rox_tesseract.robot_to_ur_inv_kin_parameters(robot)
+
+    assert ur_params.d1 == 0.1625
+    assert ur_params.a2 == -0.425
+    assert ur_params.a3 == -0.3922
+    assert ur_params.d4 == 0.1333
+    assert ur_params.d5 == 0.0997
+    assert ur_params.d6 == 0.0996
+
+def test_tesseract_robot_ur5e():
+    with open(_get_absolute_path("ur5e_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot", invkin_solver="URInvKin")
 
     _assert_tesseract_kinematics(robot, tesseract_robot)
