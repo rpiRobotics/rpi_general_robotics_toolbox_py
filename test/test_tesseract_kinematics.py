@@ -414,6 +414,7 @@ def test_ur_inv_kin_params_ur5e():
     assert ur_params.d5 == 0.0997
     assert ur_params.d6 == 0.0996
 
+@pytest.mark.skip(reason="URInvKin solver possible bug")
 def test_tesseract_robot_ur5e():
     with open(_get_absolute_path("ur5e_robot_default_config.yml"), "r") as f:
         robot = rr_rox.load_robot_info_yaml_to_robot(f)
