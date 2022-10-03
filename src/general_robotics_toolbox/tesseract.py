@@ -1,3 +1,31 @@
+# Copyright (c) 2022, Rensselaer Polytechnic Institute, Wason Technology LLC
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of the Rensselaer Polytechnic Institute, nor Wason 
+#       Technology LLC, nor the names of its contributors may be used to 
+#       endorse or promote products derived from this software without 
+#       specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 import sys
 
 if sys.version_info < (3,6):
@@ -19,12 +47,70 @@ from tesseract_robotics.tesseract_srdf import KinematicsInformation, parseKinema
 import yaml
 import io
 from typing import NamedTuple
+ 
+"""
+Tesseract Robotics integration and support functions for the General Robotics Toolbox
+
+Tesseract Robotics is a high performance robot planning framework. This module allows the high performance
+kinematics functions to be used in place of the slow Python functions available in the rest of this module.
+
+Most users will only need the TesseractRobotics class, which is initialized using a Robot structure. These
+can either be entered in Python, or use the yaml loaders an the general_robotics_toolbox.robotraconteur module. The
+TesseractRobotics class has the functions fwdkin(), jacobian(), invkin(), and redundant_solutions() available.
+
+A simple example of using the TesseractRobotics class::
+
+    # Import reqired modules
+    import numpy as np
+    import general_robotics_toolbox as rox
+    from general_robotics_toolbox import tesseract as rox_tesseract
+    from general_robotics_toolbox import robotraconteur as rr_rox
+
+    with open("abb_1200_5_90_robot_default_config.yml", "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+    
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot", invkin_solver="OPWInvKin")
+
+    # Random joint angles
+    q = np.array([0.1, 0.11, 0.12, 0.13, 0.14, 0.15])
+
+    # Compute forward kinematics
+    T_tip_link = tesseract_robot.fwdkin(q)
+
+    # Compute robot Jacobian
+    J = tesseract_robot.jacobian(q)
+
+    # Solve inverse kinematics for T_des pose
+    T_des = rox.Transform(rox.rot([0,1,0], np.deg2rad(80)), np.array([0.5,0.1,0.71]))
+    invkin1 = tesseract_robot.invkin(T_des,q*0.7)
+
+    # Find redundant solutions for first candidate joint angle
+    invkin1_redun = []
+    for invkin1_i in invkin1:
+        invkin1_redun.extend(tesseract_robot.redundant_solutions(invkin1_i))
+"""
 
 def transform_to_isometry3d(T):
+    """
+    Convert a general_robotics_toolbox.Transform to tesseract_common.Isometry3d
+
+    :type  T: general_robotics_toolbox.Transform
+    :param T: The transform to convert
+    :rtype  : tesseract_common.Isometry3d
+    :return : The converted transform
+    """
     # TODO: Use better Isometry3d constructor
     return Translation3d(T.p) * AngleAxisd(T.R)
 
 def isometry3d_to_transform(eig_iso):
+    """
+    Convert a tesseract_common.Isometry3d to general_robotics_toolbox.Transform
+
+    :type  T: tesseract_common.Isometry3d
+    :param T: The transform to convert
+    :rtype  : general_robotics_toolbox.Transform
+    :return : The converted transform
+    """
     H = eig_iso.matrix()
     R = H[0:3,0:3]
     p = H[0:3,3].flatten()
@@ -32,6 +118,35 @@ def isometry3d_to_transform(eig_iso):
 
 def get_link_and_joint(h, p, joint_type, joint_lower_limit, joint_upper_limit, joint_vel_limit,
     joint_acc_limit, joint_effort_limit, link_name, joint_name, parent_link_name):
+    """
+    Create a tesseract link and joint from parameters
+
+    All units are expected to be SI
+
+    :type h: np.array
+    :param h: Joint unit vector, corresponds to H[:,i]
+    :type p: np.array
+    :param p: Joint origin vector, corresponds to P[:,i+1]
+    :type joint_type: int
+    :param joint_type: Joint type. Supported values 0 for revolute, 1 for prismatic
+    :type joint_lower_limit: float
+    :param joint_lower_limit: Joint lower position limit
+    :type joint_upper_limit: float
+    :param joint_upper_limit: Joint upper position limit
+    :type joint_vel_limit: float
+    :param joint_vel_limit: Joint velocity limit
+    :type joint_acc_limit: float
+    :param joint_acc_limit: Joint acceleration limit
+    :type joint_effort_limit: float
+    :param joint_effort_limit: Joint effort limit
+    :type link_name: str
+    :param link_name: Link name
+    :type joint_name: str
+    :param joint_name: Joint name
+    :type parent_link_name: str
+    :param parent_link_name: Parent link name
+    :rtype: Tuple[tesseract_scene_graph.Link,tesseract_scene_graph.Joint]
+    """
     
     link = Link(link_name)
     joint = Joint(joint_name)
@@ -51,6 +166,21 @@ def get_link_and_joint(h, p, joint_type, joint_lower_limit, joint_upper_limit, j
     return link,joint
 
 def get_fixed_link_and_joint(T, link_name, joint_name, parent_link_name):
+    """
+    Create a tesseract link and fixed joint from parameters
+
+    All units are expected to be SI
+
+    :type T: general_robotics_toolbox.Transform
+    :param T: Transform for fixed link origin
+    :type link_name: str
+    :param link_name: Link name
+    :type joint_name: str
+    :param joint_name: Joint name
+    :type parent_link_name: str
+    :param parent_link_name: Parent link name
+    :rtype: Tuple[tesseract_scene_graph.Link,tesseract_scene_graph.Joint]
+    """
     link = Link(link_name)
     joint = Joint(joint_name)
 
@@ -61,6 +191,19 @@ def get_fixed_link_and_joint(T, link_name, joint_name, parent_link_name):
     return link,joint
 
 def get_robot_world_to_base_joint(robot, robot_name):
+    """
+    Create fixed joint from world to robot base origin. Uses robot.T_base if specified, otherwise
+    return identity transform.
+
+    :type robot: general_robotics_toolbox.Robot
+    :param robot: Input Robot structure containing robot parameters
+    :type robot_name: str
+    :param robot_name: The name of the robot. Must match name used to initialize other parameters
+    :rtype: tesseract_scene_graph.Joint
+    :return: The fixed joint from world to robot origin
+    """
+    
+
     joint = Joint(f"world_to_{robot_name}")
 
     joint.type = JointType_FIXED
@@ -78,6 +221,20 @@ def _prefix_names(names, robot_name):
     return [f"{robot_name}_{n}" for n in names]
 
 def robot_to_scene_graph(robot, return_names = False):
+    """
+    Convert a general_robotics_toolbox.Robot structure to tesseract_scene_graph.Graph. Does not create world
+    link, or use T_base.
+
+    :type    robot: general_robotics_toolbox.Robot
+    :param   robot: Input Robot structure containing robot parameters
+    :type    return_names: bool
+    :param   return_names: Return the names of created links and joints. Optional, default false
+    :rtype:  tesseract_scene_graph.Graph or (tesseract_scene_graph.Graph, List[str], List[str], List[str])
+    :return: The scene graph, and optionally the scene graph, link names, joint names, and chain link names if
+             return_names is True
+    """
+
+
     sg = SceneGraph()
 
     sg_link_names = ["base_link"]
@@ -139,6 +296,14 @@ def robot_to_scene_graph(robot, return_names = False):
         return sg, sg_link_names, joint_names, ["base_link"] + link_names
 
 def world_scene_graph(world_link_name = "world"):
+    """
+    Returns a scene graph containing only a world link
+
+    :type world_link_name: str
+    :param world_name_name: The name of the world link. Optional, defaults to "world"
+    :rtype: tesseract_scene_graph.Graph
+    :return: Scene graph with world link
+    """
     sg = SceneGraph()
     sg.addLink(Link(world_link_name))
     return sg
@@ -146,6 +311,31 @@ def world_scene_graph(world_link_name = "world"):
 
 def tesseract_kinematics_information(robot, robot_name, link_names, joint_names, chain_link_names, invkin_solver = None, 
     invkin_plugin_info = None, base_link = None, tip_link = None):
+    """
+    Creates a tesseract_kinematics.KinematicsInformation structure from parameters
+
+    :type robot: general_robotics_toolbox.Robot
+    :param robot: Robot structure containing robot parameters
+    :type robot_name: str
+    :param robot_name: The name of the robot. Must match name used to initialize other parameters
+    :type link_names: List[str]
+    :param link_names: The names of the links in the current robot
+    :type joint_names: List[str]
+    :param joint_names: The names of the joints in the current robot
+    :type chain_link_names: List[str]
+    :param chain_link_names: The names of the chain links of the current robot
+    :type invkin_solver: str
+    :param invkin_solver: The name of the inverse kinematics solver to use. Defaults to KDLInvKinChainLMA. Supports
+                        KDLInvKinChainLMA, KDLInvKinChainNR, OPWInvKin, and URInvKin
+    :type invkin_plugin_info: str
+    :param invkin_plugin_info: Override plugin_info yaml string. invkin_solver is ignored if used
+    :type base_link: str
+    :param base_link: The name of the robot base link. Optional, defaults to link_names[0]
+    :type tip_link: str
+    :param tip_link: The name of the tip link. Optional, default to link_names[-1]
+    :rtype: tesseract_kinematics.KinematicsInformation
+    :return: The information structure
+    """
     
     if base_link is None:
         base_link = link_names[0]
@@ -170,6 +360,27 @@ def tesseract_kinematics_information(robot, robot_name, link_names, joint_names,
 
 def robot_to_tesseract_env_commands(robot, robot_name = "robot", include_world = True, return_names = False, 
     invkin_solver = None, invkin_plugin_info = None):
+    """
+    Creates a set of Tesseract Environment commands to initialize the environment with a specified robot structure.
+
+    :type robot: general_robotics_toolbox.Robot
+    :param robot: Input Robot structure containing robot parameters
+    :type robot_name: str
+    :param robot_name: The name of the robot. Optional, defaults to "robot"
+    :type include_world: bool
+    :param include_world: Include the world link in commands. Omit if adding another robot to an environment.
+                          Optional, defaults to True.
+    :type return_names: bool
+    :param return_names: Return names of links in joints. Optional, defaults to false
+    :type invkin_solver: str
+    :param invkin_solver: The name of the inverse kinematics solver to use. Defaults to KDLInvKinChainLMA. Supports
+                        KDLInvKinChainLMA, KDLInvKinChainNR, OPWInvKin, and URInvKin
+    :type invkin_plugin_info: str
+    :param invkin_plugin_info: Override plugin_info yaml string. invkin_solver is ignored if used
+    :rtype:  tesseract_environment.Commands or (tesseract_environment.Commands, List[str], List[str], List[str])
+    :return: The environment commands, and optionally the commands, link names and joint names if
+             return_names is True
+    """
         
     commands = Commands()
     
@@ -203,6 +414,18 @@ def robot_to_tesseract_env_commands(robot, robot_name = "robot", include_world =
             return commands, link_names, joint_names
 
 def kinematics_plugin_fwdkin_kdl_plugin_info_dict(robot_name, base_link, tip_link):
+    """
+    Create dictionary of yaml parameters for KDL forward kinematics
+
+    :type robot_name: str
+    :param robot_name: The name of the robot
+    :type base_link: str
+    :param base_link: The name of the robot base link
+    :type tip_link: str
+    :param tip_link: The name of the robot tip link
+    :rtype: dict
+    :return: KDL plugin info as dict to convert to yaml
+    """
     plugin_info = {        
         "fwd_kin_plugins": {
             robot_name: {
@@ -223,6 +446,21 @@ def kinematics_plugin_fwdkin_kdl_plugin_info_dict(robot_name, base_link, tip_lin
     return plugin_info, ["tesseract_kinematics_kdl_factories"]
 
 def kinematics_plugin_invkin_kdl_plugin_info_dict(robot_name, base_link, tip_link, default_solver = "KDLInvKinChainLMA"):
+    """
+    Create dictionary of yaml parameters for KDL inverse kinematics. Supported solvers are
+    KDLInvKinChainLMA and KDLInvKinChainNR
+
+    :type robot_name: str
+    :param robot_name: The name of the robot
+    :type base_link: str
+    :param base_link: The name of the robot base link
+    :type tip_link: str
+    :param tip_link: The name of the robot tip link
+    :type default_solver: str
+    :param default_solver: The default KDL solver. Optional, defaults to KDLInvKinChainLMA
+    :rtype: dict
+    :return: KDL plugin info as dict to convert to yaml
+    """
     plugin_info = {
         "inv_kin_plugins": {
             robot_name: {
@@ -251,6 +489,31 @@ def kinematics_plugin_invkin_kdl_plugin_info_dict(robot_name, base_link, tip_lin
 
 def kinematics_plugin_info_dict(robot, robot_name, link_names, joint_names, chain_link_names, invkin_solver = None, 
     invkin_plugin_info = None, base_link = None, tip_link = None):
+    """
+    Creates dictionary of kinematics plugin info from parameters
+
+    :type robot: general_robotics_toolbox.Robot
+    :param robot: Robot structure containing robot parameters
+    :type robot_name: str
+    :param robot_name: The name of the robot. Must match name used to initialize other parameters
+    :type link_names: List[str]
+    :param link_names: The names of the links in the current robot
+    :type joint_names: List[str]
+    :param joint_names: The names of the joints in the current robot
+    :type chain_link_names: List[str]
+    :param chain_link_names: The names of the chain links of the current robot
+    :type invkin_solver: str
+    :param invkin_solver: The name of the inverse kinematics solver to use. Defaults to KDLInvKinChainLMA. Supports
+                        KDLInvKinChainLMA, KDLInvKinChainNR, OPWInvKin, and URInvKin
+    :type invkin_plugin_info: str
+    :param invkin_plugin_info: Override plugin_info yaml string. invkin_solver is ignored if used
+    :type base_link: str
+    :param base_link: The name of the robot base link. Optional, defaults to link_names[0]
+    :type tip_link: str
+    :param tip_link: The name of the tip link. Optional, default to link_names[-1]
+    :rtype: dict
+    :return: Kinematics plugin info as dict to convert to yaml
+    """
     
     if base_link is None:
         base_link = link_names[0]
@@ -297,6 +560,31 @@ def kinematics_plugin_info_dict(robot, robot_name, link_names, joint_names, chai
         
 def kinematics_plugin_info_string(robot, robot_name, link_names, joint_names, chain_link_names, invkin_solver = None, 
     invkin_plugin_info = None, base_link = None, tip_link = None):
+    """
+    Creates string of kinematics plugin info from parameters
+
+    :type robot: general_robotics_toolbox.Robot
+    :param robot: Robot structure containing robot parameters
+    :type robot_name: str
+    :param robot_name: The name of the robot. Must match name used to initialize other parameters
+    :type link_names: List[str]
+    :param link_names: The names of the links in the current robot
+    :type joint_names: List[str]
+    :param joint_names: The names of the joints in the current robot
+    :type chain_link_names: List[str]
+    :param chain_link_names: The names of the chain links of the current robot
+    :type invkin_solver: str
+    :param invkin_solver: The name of the inverse kinematics solver to use. Defaults to KDLInvKinChainLMA. Supports
+                        KDLInvKinChainLMA, KDLInvKinChainNR, OPWInvKin, and URInvKin
+    :type invkin_plugin_info: str
+    :param invkin_plugin_info: Override plugin_info yaml string. invkin_solver is ignored if used
+    :type base_link: str
+    :param base_link: The name of the robot base link. Optional, defaults to link_names[0]
+    :type tip_link: str
+    :param tip_link: The name of the tip link. Optional, default to link_names[-1]
+    :rtype: str
+    :return: Kinematics plugin info as yaml string
+    """
 
     plugin_info_dict = kinematics_plugin_info_dict(robot, robot_name, link_names, joint_names, chain_link_names,
         invkin_solver, invkin_plugin_info, base_link, tip_link)
@@ -308,6 +596,10 @@ def kinematics_plugin_info_string(robot, robot_name, link_names, joint_names, ch
     return plugin_info_str
 
 class OPWInvKinParameters(NamedTuple):
+    """
+    OPW inverse kinematics solver parameters. See https://github.com/Jmeyer1292/opw_kinematics and
+    robot_to_opw_inv_kin_parameters()
+    """
     a1: float
     a2: float
     b: float
@@ -405,6 +697,20 @@ def robot_to_opw_inv_kin_parameters(robot):
     )
     
 def kinematics_plugin_invkin_opw_plugin_info_dict(robot_name, base_link, tip_link, opw_params):
+    """
+    Create dictionary of yaml parameters for OPW inverse kinematics.
+
+    :type robot_name: str
+    :param robot_name: The name of the robot
+    :type base_link: str
+    :param base_link: The name of the robot base link
+    :type tip_link: str
+    :param tip_link: The name of the robot tip link
+    :type opw_params: OPWInvKinParameters
+    :param default_solver: Structure containing OPW parameters. See robot_to_opw_inv_kin_parameters()
+    :rtype: dict
+    :return: OPWInvKin plugin info as dict to convert to yaml
+    """
     plugin_info = {
         "inv_kin_plugins": {
             robot_name: {
@@ -438,6 +744,27 @@ def kinematics_plugin_invkin_opw_plugin_info_dict(robot_name, base_link, tip_lin
 
 def robot_to_tesseract_env(robot, robot_name = "robot", include_world = True, return_names = False, 
     invkin_solver = None, invkin_plugin_info = None):
+    """
+    Creates a TesseractEnvironment initialized with a specified robot structure.
+
+    :type robot: general_robotics_toolbox.Robot
+    :param robot: Input Robot structure containing robot parameters
+    :type robot_name: str
+    :param robot_name: The name of the robot. Optional, defaults to "robot"
+    :type include_world: bool
+    :param include_world: Include the world link in commands. Omit if adding another robot to an environment.
+                          Optional, defaults to True.
+    :type return_names: bool
+    :param return_names: Return names of links in joints. Optional, defaults to false
+    :type invkin_solver: str
+    :param invkin_solver: The name of the inverse kinematics solver to use. Defaults to KDLInvKinChainLMA. Supports
+                        KDLInvKinChainLMA, KDLInvKinChainNR, OPWInvKin, and URInvKin
+    :type invkin_plugin_info: str
+    :param invkin_plugin_info: Override plugin_info yaml string. invkin_solver is ignored if used
+    :rtype:  tesseract_environment.Commands or (tesseract_environment.Commands, List[str], List[str], List[str])
+    :return: The environment commands, and optionally the commands, link names and joint names if
+             return_names is True
+    """
 
     tesseract_env_commands, link_names, joint_names = robot_to_tesseract_env_commands(robot, 
         robot_name, include_world, True, invkin_solver, invkin_plugin_info)
@@ -452,7 +779,33 @@ def robot_to_tesseract_env(robot, robot_name = "robot", include_world = True, re
 
 
 class TesseractRobot:
+    """
+    Robot class that uses Tesseract for kinematic solvers. A tesseract_environment.Environment class is populated
+    using a general_robotics_toolbox.Robot structure using the utility functions in the 
+    general_robotics_toolbox.tesseract module. These solvers use high performance solvers, and are significantly
+    faster than the Python based solvers in general_robotics_toolbox. The functions of this class should return
+    identical results to the Python based solvers.
+    """
     def __init__(self, robot = None, robot_name = "robot", invkin_solver = "KDLInvKinChainLMA", tesseract_env = None):
+        """
+        Construct a TesseractRobot robot class using a general_robotics_toolbox.Robot structure. Specify a solver
+        that best matches the robot. The OPWInvKin and URInvKin solvers use closed form solutions, while
+        KDLInvKinChainLMA and KDLInvKinChainNR are iterative solvers. OPWInvKin should be used for six-axis industrial 
+        robots with spherical wrists, while URInvKin should be used for Universal Robot UR or URe series robots.
+
+        :type robot: general_robotics_toolbox.Robot
+        :param robot: Robot structure containing robot parameters
+        :type robot_name: str
+        :param robot_name: The name of the robot. Optional, defaults to "robot"
+        :type invkin_solver: str
+        :param invkin_solver: The name of the inverse kinematics solver to use. Optional, defaults to KDLInvKinChainLMA. 
+                        Supports KDLInvKinChainLMA, KDLInvKinChainNR, OPWInvKin, and URInvKin
+        :type tesseract_env: tesseract_environment.Environment
+        :param tesseract_env: A prepared Tesseract Environment. Use if an existing environment is available. Must
+                              be None if using the robot parameter. Optional, defaults to None.
+
+        """
+
         assert robot or tesseract_env
         assert not (robot  and tesseract_env)
 
@@ -470,6 +823,18 @@ class TesseractRobot:
             self.tip_link_name = kin_grp.getAllPossibleTipLinkNames()[0]
     
     def fwdkin(self, theta, base_link_name = None, tip_link_name = None):
+        """
+        Compute robot forward kinematics at specified joint angles.
+
+        :type theta: np.array
+        :param theta: The N vector of joint angles. Length must match number of joints. Expects radians or meters.
+        :type base_link_name: str
+        :param base_link_name: Base frame to compute kinematics. Optional, defaults to "world"
+        :type tip_link_name: str
+        :param tip_link_name: The tip link to compute forward kinematics. Optional, defaults to last link.
+        :rtype: general_robotics_toolbox.Transform
+        :return: The pose of tip link in base frame
+        """
         kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
         frames = kin_group.calcFwdKin(theta)
 
@@ -487,6 +852,18 @@ class TesseractRobot:
             return isometry3d_to_transform(res)
 
     def jacobian(self, theta, base_link_name = None, link_name = None):
+        """
+        Compute robot jacobian at specified joint angles.
+
+        :type theta: np.array
+        :param theta: The N vector of joint angles. Length must match number of joints. Expects radians or meters.
+        :type base_link_name: str
+        :param base_link_name: Base frame to compute jacobian. Optional, defaults to "world"
+        :type tip_link_name: str
+        :param tip_link_name: The tip link to compute jacobian. Optional, defaults to last link.
+        :rtype: np.array
+        :return: The 6x6 Jacobian array. Note that this array has angular velocity on the first three rows.
+        """
         kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
         if base_link_name is None:
             base_link_name = self.base_link_name
@@ -500,6 +877,21 @@ class TesseractRobot:
         return J
 
     def invkin(self, tip_link_pose, theta_seed, base_link_name = None, tip_link_name = None):
+        """
+        Solve inverse kinematics of robot at specified tip link pose.
+
+        :type tip_link_pose: general_robotics_toolbox.Transform
+        :param tip_link_pose: The desired pose of the robot tip link
+        :type theta_seet: np.array
+        :param theta_seed: The N vector of seed joint angles. Used as initial position of robot joints for iterative
+                           solvers. Length must match number of joints. Expects radians or meters.
+        :type base_link_name: str
+        :param base_link_name: Base frame to solve kinematics. Optional, defaults to "world"
+        :type tip_link_name: str
+        :param tip_link_name: The tip link to solve kinematics. Optional, defaults to last link.
+        :rtype: List[np.array]
+        :return: A list of joint angle candidate solutions, or empty if no solution possible
+        """
         kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
         if base_link_name is None:
             base_link_name = self.base_link_name
@@ -520,10 +912,23 @@ class TesseractRobot:
         return ret
 
     def redundant_solutions(self, theta):
+        """
+        Return "redundant" joint angle solutions. Some robot joints can spin more than 360 degrees, resulting in
+        multiple redundant solutions with the joints rotated plus or minus 360 degrees. Return these potential
+        solutions.
+
+        :type theta: np.array
+        :param theta: Robot joint angles
+        :rtype: List[np.array]
+        :return: List of redundant joint angles
+        """
         kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
         return redundant_solutions(kin_group, theta)
 
 class URInvKinParameters(NamedTuple):
+    """
+    UR inverse kinematics solver parameters. See robot_to_ur_inv_kin_parameters()
+    """
     d1: float
     a2: float
     a3: float
@@ -577,6 +982,20 @@ def robot_to_ur_inv_kin_parameters(robot):
     return ret
 
 def kinematics_plugin_invkin_ur_plugin_info_dict(robot_name, base_link, tip_link, ur_params):
+    """
+    Create dictionary of yaml parameters for UR inverse kinematics.
+
+    :type robot_name: str
+    :param robot_name: The name of the robot
+    :type base_link: str
+    :param base_link: The name of the robot base link
+    :type tip_link: str
+    :param tip_link: The name of the robot tip link
+    :type ur_params: URInvKinParameters
+    :param default_solver: Structure containing UR parameters. See robot_to_ur_inv_kin_parameters()
+    :rtype: dict
+    :return: URInvKin plugin info as dict to convert to yaml
+    """
     plugin_info = {
         "inv_kin_plugins": {
             robot_name: {
@@ -605,6 +1024,18 @@ def kinematics_plugin_invkin_ur_plugin_info_dict(robot_name, base_link, tip_link
     return plugin_info, ["tesseract_kinematics_ur_factories"]
 
 def redundant_solutions(tesseract_kin_group, theta):
+    """
+    Return "redundant" joint angle solutions. Some robot joints can spin more than 360 degrees, resulting in
+    multiple redundant solutions with the joints rotated plus or minus 360 degrees. Return these potential
+    solutions.
+
+    :type tesseract_kin_group: tesseract_kinematics.KinematicGroup
+    :param tesseract_kin_group: Tesseract KinematicGroup instance
+    :type theta: np.array
+    :param theta: Robot joint angles
+    :rtype: List[np.array]
+    :return: List of redundant joint angles
+    """
     limits = tesseract_kin_group.getLimits()
     redundancy_indices = list(tesseract_kin_group.getRedundancyCapableJointIndices())
 

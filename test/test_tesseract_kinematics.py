@@ -457,3 +457,28 @@ def test_tesseract_redundant_solution():
 
     nptest.assert_allclose(redun_sol[0], 
         np.array([0.08726646, 0.08726646,  0.08726646, 0.08726646, 0.08726646, -6.19591884]))
+
+def test_tesseract_robot_example():
+    with open(_get_absolute_path("abb_1200_5_90_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+    
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot", invkin_solver="OPWInvKin")
+
+    # Random joint angles
+    q = np.array([0.1, 0.11, 0.12, 0.13, 0.14, 0.15])
+
+    # Compute forward kinematics
+    T_tip_link = tesseract_robot.fwdkin(q)
+
+    # Compute robot Jacobian
+    J = tesseract_robot.jacobian(q)
+
+    # Solve inverse kinematics for T_des pose
+    T_des = rox.Transform(rox.rot([0,1,0], np.deg2rad(80)), np.array([0.5,0.1,0.71]))
+    invkin1 = tesseract_robot.invkin(T_des,q*0.7)
+
+    # Find redundant solutions for first candidate joint angle
+    invkin1_redun = []
+    for invkin1_i in invkin1:
+        invkin1_redun.extend(tesseract_robot.redundant_solutions(invkin1_i))
+
