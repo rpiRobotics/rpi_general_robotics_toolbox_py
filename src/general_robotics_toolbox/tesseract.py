@@ -443,7 +443,7 @@ def kinematics_plugin_fwdkin_kdl_plugin_info_dict(robot_name, base_link, tip_lin
         }
     }
     
-    return plugin_info, ["tesseract_kinematics_kdl_factories"]
+    return plugin_info, [] #["tesseract_kinematics_kdl_factories"]
 
 def kinematics_plugin_invkin_kdl_plugin_info_dict(robot_name, base_link, tip_link, default_solver = "KDLInvKinChainLMA"):
     """

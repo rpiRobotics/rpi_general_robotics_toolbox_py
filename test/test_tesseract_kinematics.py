@@ -253,8 +253,7 @@ def test_kinematics_plugin_info_string_abb1200():
     '              - 0.0\n              - -1.57079633\n              - 0.0\n              - 0.0\n' \
     '              - 0.0\n              sign_corrections:\n              - 1\n              - 1\n' \
     '              - 1\n              - 1\n              - 1\n              - 1\n' \
-    '            tip_link: flange\n  search_libraries:\n  - tesseract_kinematics_opw_factories\n' \
-    '  - tesseract_kinematics_kdl_factories\n'
+    '            tip_link: flange\n  search_libraries:\n  - tesseract_kinematics_opw_factories\n'
 
     assert kin_plugin_info == kin_plugin_info_expected
 
@@ -303,7 +302,7 @@ def test_opw_inv_kin_params_rp260():
     kin_group = env.getKinematicGroup("robot")
     assert kin_group is not None
 
-    q = np.ones((6,),dtype=np.float64)*np.deg2rad(15)
+    q = -np.ones((6,),dtype=np.float64)*np.deg2rad(15)
     fwdkin_res = kin_group.calcFwdKin(q)
     tcp_pose = fwdkin_res["robot_flange"]
     
