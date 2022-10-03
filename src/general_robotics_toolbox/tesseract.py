@@ -14,7 +14,7 @@ from tesseract_robotics.tesseract_scene_graph import Link, Joint, JointLimits, \
     JointType_FIXED, JointType_REVOLUTE, JointType_PRISMATIC, SceneGraph
 from tesseract_robotics.tesseract_common import FilesystemPath, ManipulatorInfo, KinematicsPluginInfo, \
     PluginInfoContainer
-from tesseract_robotics.tesseract_kinematics import KinGroupIKInput, KinGroupIKInputs
+from tesseract_robotics.tesseract_kinematics import KinGroupIKInput, KinGroupIKInputs, getRedundantSolutions
 from tesseract_robotics.tesseract_srdf import KinematicsInformation, parseKinematicsPluginConfigString
 import yaml
 import io
@@ -519,6 +519,10 @@ class TesseractRobot:
             ret.append(invkin1[i].flatten())
         return ret
 
+    def redundant_solutions(self, theta):
+        kin_group = self.tesseract_env.getKinematicGroup(self.robot_name)
+        return redundant_solutions(kin_group, theta)
+
 class URInvKinParameters(NamedTuple):
     d1: float
     a2: float
@@ -599,3 +603,11 @@ def kinematics_plugin_invkin_ur_plugin_info_dict(robot_name, base_link, tip_link
     }
 
     return plugin_info, ["tesseract_kinematics_ur_factories"]
+
+def redundant_solutions(tesseract_kin_group, theta):
+    limits = tesseract_kin_group.getLimits()
+    redundancy_indices = list(tesseract_kin_group.getRedundancyCapableJointIndices())
+
+    redun_sol = getRedundantSolutions(theta, limits.joint_limits, redundancy_indices)
+
+    return [x.flatten() for x in redun_sol]

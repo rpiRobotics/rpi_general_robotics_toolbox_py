@@ -422,3 +422,38 @@ def test_tesseract_robot_ur5e():
     tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot", invkin_solver="URInvKin")
 
     _assert_tesseract_kinematics(robot, tesseract_robot)
+
+def test_tesseract_redundant_solutions_tesseract_function():
+    with open(_get_absolute_path("abb_1200_5_90_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    env = rox_tesseract.robot_to_tesseract_env(robot, "sawyer")
+
+    # kin_info = env.getKinematicsInformation()
+    kin_group = env.getKinematicGroup("sawyer")
+
+    limits = kin_group.getLimits()
+    redundancy_indices = list(kin_group.getRedundancyCapableJointIndices())
+
+    import tesseract_robotics.tesseract_kinematics as tes_com
+    sol = np.ones((6,1))*np.deg2rad(5)
+    redun_sol = tes_com.getRedundantSolutions(sol, limits.joint_limits, redundancy_indices)
+    
+    assert len(redun_sol) == 1
+
+    nptest.assert_allclose(redun_sol[0].flatten(), 
+        np.array([0.08726646, 0.08726646,  0.08726646, 0.08726646, 0.08726646, -6.19591884]))
+
+def test_tesseract_redundant_solution():
+    with open(_get_absolute_path("abb_1200_5_90_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "sawyer")
+
+    sol = np.ones((6,1))*np.deg2rad(5)
+    redun_sol = tesseract_robot.redundant_solutions(sol)
+    
+    assert len(redun_sol) == 1
+
+    nptest.assert_allclose(redun_sol[0], 
+        np.array([0.08726646, 0.08726646,  0.08726646, 0.08726646, 0.08726646, -6.19591884]))
