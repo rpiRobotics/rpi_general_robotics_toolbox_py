@@ -537,8 +537,8 @@ def kinematics_plugin_info_dict(robot, robot_name, link_names, joint_names, chai
                 base_link, tip_link, invkin_solver)
         elif invkin_solver == "OPWInvKin":
             opw_params = robot_to_opw_inv_kin_parameters(robot)
-            invkin_plugin_info, invkin_libs = kinematics_plugin_invkin_opw_plugin_info_dict(robot_name, base_link,
-                tip_link, opw_params)
+            invkin_plugin_info, invkin_libs = kinematics_plugin_invkin_opw_plugin_info_dict(robot_name, chain_link_names[0],
+                robot_name + "_flange", opw_params)
         elif invkin_solver == "URInvKin":
             ur_params = robot_to_ur_inv_kin_parameters(robot)
             invkin_plugin_info, invkin_libs = kinematics_plugin_invkin_ur_plugin_info_dict(robot_name, base_link,
@@ -632,6 +632,10 @@ def robot_to_opw_inv_kin_parameters(robot):
     ex = np.array([1.,0.,0.])
     ey = np.array([0.,1.,0.])
     ez = np.array([0.,0.,1.])
+
+    assert robot.T_flange
+    assert np.allclose(robot.T_flange.R, rox.rot([0,1,0], np.pi/2.0))
+    assert np.allclose(robot.T_flange.p.flatten(), np.array([0.,0.,0.]))
 
     assert len(robot.joint_type) == 6
 
