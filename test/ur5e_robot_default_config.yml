@@ -19,6 +19,17 @@ device_info:
         - cobot
   implemented_types:
     - com.robotraconteur.robotics.robot.Robot
+  device_origin_pose:
+    pose:
+      orientation:
+        w: 0
+        x: 0
+        y: 0
+        z: 1
+      position:
+        x: 0
+        y: 0
+        z: 0
 robot_type: serial
 robot_capabilities:
 - jog_command

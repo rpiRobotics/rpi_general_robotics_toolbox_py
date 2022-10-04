@@ -956,6 +956,14 @@ def robot_to_ur_inv_kin_parameters(robot):
     ey = np.array([0.,1.,0.])
     ez = np.array([0.,0.,1.])
 
+    assert robot.T_flange
+    assert np.allclose(robot.T_flange.R, np.array([ex, ez, -ey]).T, atol=1e-6)
+    assert np.allclose(robot.T_flange.p.flatten(), np.array([0.,0.,0.]))
+
+    assert robot.T_base
+    assert np.allclose(robot.T_base.R, rox.rot([0,0,1], np.pi), atol=1e-6)
+    assert np.allclose(robot.T_base.p.flatten(), np.array([0.,0.,0.]))
+
     minus_x = np.allclose(robot.H, np.array([ez,-ey,-ey,-ey,-ez,-ey]).T)
     plus_x = np.allclose(robot.H, -np.array([ez,-ey,-ey,-ey,-ez,-ey]).T)
 
