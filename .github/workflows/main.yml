@@ -15,11 +15,17 @@ jobs:
       matrix:
         config:
           - python_version: "2.7"
+            tesseract_robotics: false
           - python_version: "3.6"
+            tesseract_robotics: false
           - python_version: "3.7"
+            tesseract_robotics: true
           - python_version: "3.8"
+            tesseract_robotics: true
           - python_version: "3.9"
+            tesseract_robotics: true
           - python_version: "3.10"
+            tesseract_robotics: true
     steps:
     - uses: actions/checkout@v3
       with:
@@ -29,6 +35,9 @@ jobs:
         python-version: '${{ matrix.config.python_version }}'
     - name: pip
       run: python -m pip install pytest wheel setuptools
+    - name: pip tesseract-robotics
+      if: '${{ matrix.config.tesseract_robotics }}'
+      run: python -m pip install tesseract-robotics
     - name: pip local package
       run: pip install .
       working-directory: rpi_general_robotics_toolbox_py

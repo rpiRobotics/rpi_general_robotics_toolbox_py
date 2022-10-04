@@ -1,0 +1,164 @@
+device_info:
+  device:
+    name: rp260_robot
+  manufacturer:
+    name: RP_Automation
+    uuid: e14a3241-159d-4c25-81fb-19eff378d5b3
+  model:
+    name: RP260
+    uuid: 3fd21c0a-8f15-4d0a-84af-2ce5f9f71979
+  user_description: RP Automation 260 Robot
+  serial_number: 123456789
+  device_classes:
+    - class_identifier:
+        name: robot
+        uuid: 39b513e7-21b9-4b49-8654-7537473030eb
+      subclasses: 
+        - serial
+        - serial_six_axis        
+  implemented_types:
+    - com.robotraconteur.robotics.robot.Robot
+  device_origin_pose:
+    pose:
+      orientation:
+        w: 0.707107
+        x: 0
+        y: 0
+        z: -0.707107
+      position:
+        x: 0.5
+        y: 0.23
+        z: 0.8
+robot_type: serial
+robot_capabilities:
+- jog_command
+- trajectory_command
+- position_command
+chains:
+- kin_chain_identifier: robot_arm
+  H:
+  - x: 0.0
+    y: 0.0
+    z: 1.0
+  - x: 0.0
+    y: 1.0
+    z: 0.0
+  - x: 0.0
+    y: 1.0
+    z: 0.0
+  - x: 1.0
+    y: 0.0
+    z: 0.0
+  - x: 0.0
+    y: 1.0
+    z: 0.0
+  - x: 1.0
+    y: 0.0
+    z: 0.0
+  P:
+  - x: 0.0
+    y: 0.0
+    z: 0.3302
+  - x: 0.0
+    y: 0.0
+    z: 0.0
+  - x: 0.19812
+    y: -0.12446
+    z: -0.01905
+  - x: 0.2032
+    y: 0.0
+    z: 0.0
+  - x: 0.0
+    y: 0.0
+    z: 0.0
+  - x: 0.0635
+    y: 0.0
+    z: 0.0
+  - x: 0.0
+    y: 0.0
+    z: 0.0
+  flange_identifier: tool0
+  flange_pose:
+    orientation:
+      w: 0.7071067811882787
+      x: 0.0
+      y: 0.7071067811848163
+      z: 0.0
+    position:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+  joint_numbers:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+joint_info:
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_1
+  joint_limits:
+    effort: 100.0
+    lower: -1.57079632679
+    upper: 3.49065850399
+    velocity: 2.07694180987
+    acceleration: 1
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_2
+  joint_limits:
+    effort: 100.0
+    lower: -4.18879020479
+    upper: 1.308996939
+    velocity: 2.07694180987
+    acceleration: 1
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_3
+  joint_limits:
+    effort: 100.0
+    lower: -2.53072741539
+    upper: 2.53072741539
+    velocity: 2.86233997327
+    acceleration: 1
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_4
+  joint_limits:
+    effort: 100.0
+    lower: -3.22885911619
+    upper: 6.28318530718
+    velocity: 10.070549784
+    acceleration: 1
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_5
+  joint_limits:
+    effort: 100.0
+    lower: -2.09439510239
+    upper: 2.09439510239
+    velocity: 7.5223690761
+    acceleration: 1
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_6
+  joint_limits:
+    effort: 100.0
+    lower: -6.28318530718
+    upper: 1.57079632679
+    velocity: 6.92895713042
+    acceleration: 1
+  joint_type: revolute
+  passive: false
