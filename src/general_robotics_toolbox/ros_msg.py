@@ -43,7 +43,7 @@ def msg2q(ros_quaternion):
     :type ros_quaternion: geometry_msgs.msg.Quaternion
     :param ros_quaternion: ROS Quaternion message
     :rtype: numpy.array
-    :return The 4x1 quaternion matrix
+    :return: The 4x1 quaternion matrix
     """
     return np.array([ros_quaternion.w, ros_quaternion.x, ros_quaternion.y, ros_quaternion.z])
 
@@ -54,7 +54,7 @@ def q2msg(q):
     :type q: numpy.array
     :param q: 4x1 quaternion matrix
     :rtype: geometry_msgs.msg.Quaternion
-    :return The ROS Quaternion message
+    :return: The ROS Quaternion message
     """
     q2=np.reshape(q, (4,))
     return Quaternion(q2[1], q2[2], q2[3], q2[0])
@@ -66,7 +66,7 @@ def msg2R(ros_quaternion):
     :type ros_quaternion: geometry_msgs.msg.Quaternion
     :param ros_quaternion: ROS Quaternion message
     :rtype: numpy.array
-    :return The 3x3 rotation matrix
+    :return: The 3x3 rotation matrix
     """
     return rox.q2R(msg2q(ros_quaternion))
 
@@ -77,7 +77,7 @@ def R2msg(R):
     :type R: numpy.array
     :param R: 3x3 rotation matrix
     :rtype: geometry_msgs.msg.Quaternion
-    :return The ROS Quaternion message
+    :return: The ROS Quaternion message
     """
     return q2msg(rox.R2q(R))
 
@@ -88,7 +88,7 @@ def msg2p(ros_vector3):
     :type ros_vector3: geometry_msgs.msg.Vector3
     :param ros_vector3: ROS Vector3 message
     :rtype: numpy.array
-    :return The 3x1 point vector
+    :return: The 3x1 point vector
     """
     return np.array([ros_vector3.x, ros_vector3.y, ros_vector3.z])
 
@@ -99,7 +99,7 @@ def p2msg(p):
     :type p: numpy.array
     :param p: 3x1 point matrix
     :rtype: geometry_msgs.msg.Point
-    :return The ROS Point message
+    :return: The ROS Point message
     """
     p2=np.reshape(p, (3,))
     return Vector3(p2[0], p2[1], p2[2])
@@ -111,7 +111,7 @@ def point_msg2p(ros_point):
     :type ros_point: geometry_msgs.msg.Point
     :param ros_point: ROS Point message
     :rtype: numpy.array
-    :return The 3x1 point vector
+    :return: The 3x1 point vector
     """
     return np.array([ros_point.x, ros_point.y, ros_point.z])
 
@@ -122,7 +122,7 @@ def p2point_msg(p):
     :type p: numpy.array
     :param p: 3x1 point matrix
     :rtype: geometry_msgs.msg.Point
-    :return The ROS Point message
+    :return: The ROS Point message
     """
     p2=np.reshape(p, (3,))
     return Point(p2[0], p2[1], p2[2])
@@ -135,7 +135,7 @@ def msg2transform(ros_transform):
           geometry_msgs.msg.TransformStamped, or geometry_msgs.msg.PoseStamped
     :param ros_transform: ROS Transform, Pose, TransformStamped, or PoseStamped message
     :rtype: general_robotics_toolbox.Pose
-    :return The Pose class instance
+    :return: The Pose class instance
     """
     
     if hasattr(ros_transform, 'translation') and hasattr(ros_transform, 'rotation'):
@@ -171,7 +171,7 @@ def transform2msg(transform):
     :type pose: general_robotics_toolbox.Transform
     :param pose: general_robotics_toolbox.Transform class instance
     :rtype: geometry_msgs.msg.Transform
-    :return The ROS Transform message
+    :return: The ROS Transform message
     """
     return Transform(p2msg(transform.p), R2msg(transform.R))    
 
@@ -182,7 +182,7 @@ def transform2transform_stamped_msg(transform):
     :type pose: general_robotics_toolbox.Transform
     :param pose: general_robotics_toolbox.Transform class instance
     :rtype: geometry_msgs.msg.TransformStamped
-    :return The ROS Transform message
+    :return: The ROS Transform message
     """
     r=TransformStamped()
     r.transform=Transform(p2msg(transform.p), R2msg(transform.R))
@@ -199,7 +199,7 @@ def transform2pose_msg(transform):
     :type pose: general_robotics_toolbox.Transform
     :param pose: general_robotics_toolbox.Transform class instance
     :rtype: geometry_msgs.msg.Pose
-    :return The ROS Pose message
+    :return: The ROS Pose message
     """
     return Pose(p2point_msg(transform.p), R2msg(transform.R))    
 
@@ -225,7 +225,7 @@ def msg2twist(ros_twist):
     :type ros_twist: geometry_msgs.msg.Twist
     :param ros_twist: ROS Twist message
     :rtype: numpy.array
-    :return The 6x1 twist vector
+    :return: The 6x1 twist vector
     """
     return np.array([ros_twist.angular.x, ros_twist.angular.y, ros_twist.angular.z, \
                      ros_twist.linear.x, ros_twist.linear.y, ros_twist.linear.z])
@@ -237,7 +237,7 @@ def twist2msg(twist):
     :type twist: numpy.array
     :param twist: 6x1 twist matrix
     :rtype: geometry_msgs.msg.Twist
-    :return The ROS Twist message
+    :return: The ROS Twist message
     """
     twist2=np.reshape(twist, (6,))
     return Twist(Vector3(twist2[3], twist2[4], twist2[5]),
@@ -250,7 +250,7 @@ def msg2wrench(ros_wrench):
     :type ros_wrench: geometry_msgs.msg.Wrench
     :param ros_wrench: ROS Wrench message
     :rtype: numpy.array
-    :return The 6x1 wrench vector
+    :return: The 6x1 wrench vector
     """
     return np.array([ros_wrench.torque.x, ros_wrench.torque.y, ros_wrench.torque.z, \
                      ros_wrench.force.x, ros_wrench.force.y, ros_wrench.force.z])
@@ -262,7 +262,7 @@ def wrench2msg(wrench):
     :type twist: numpy.array
     :param twist: 6x1 wrench matrix
     :rtype: geometry_msgs.msg.Wrench
-    :return The ROS Wrench message
+    :return: The ROS Wrench message
     """
     wrench2=np.reshape(wrench, (6,))
     return Wrench(Vector3(wrench2[3], wrench2[4], wrench2[5]),
