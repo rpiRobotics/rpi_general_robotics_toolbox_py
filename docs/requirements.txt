@@ -1,3 +1,6 @@
+sphinx_autodoc_typehints
+recommonmark
+setuptools
 numpy
 urdf_parser_py
 pyyaml
