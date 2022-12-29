@@ -119,7 +119,7 @@ class normalize_joints(object):
 def robot6_sphericalwrist_invkin(robot, desired_pose, last_joints = None):
     """
     Inverse kinematics for six axis articulated industrial robots
-    with sherical wrists. Examples include Puma 260, ABB IRB6640, 
+    with spherical wrists. Also referred to as "OPW" robots. Examples include Puma 260, ABB IRB6640, 
     Staubli TX40, etc. Note that this is not for Universal Robot 
     wrist configurations.
     

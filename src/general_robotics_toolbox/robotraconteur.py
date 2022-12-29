@@ -72,6 +72,15 @@ def _to_transform(d):
 
 
 def load_robot_info_yaml_to_robot(robot_info_file, chain_number=0):
+    """
+    Parse a YAML robot info file and return a populated Robot structure. This function will also include the
+    ``current_tool`` entry if present.
+
+    :param robot_info_file: The robot info file to parse
+    :type robot_info_file: TextIO | dict
+    :param chain_number: The index of the chain to parse. For single robots, use default 0
+    :type chain_number: int    
+    """
     if isinstance(robot_info_file, dict):
         robot_yml = robot_info_file
     else:
@@ -173,6 +182,17 @@ def load_robot_info_yaml_to_robot(robot_info_file, chain_number=0):
 
 
 def load_robot_and_tool_info_yaml_to_robot(robot_info_file, tool_info_file, robot_chain_number=0):
+    """
+    Parse a YAML robot info file and YAML tool info file, and return a populated Robot structure with the
+    tool attached.
+
+    :param robot_info_file: The robot info file to parse
+    :type robot_info_file: TextIO | dict
+    :param tool_info_file: The tool info file to parse
+    :type tool_info_file: TextIO | dict
+    :param chain_number: The index of the chain to parse. For single robots, use default 0
+    :type chain_number: int    
+    """
     robot = load_robot_info_yaml_to_robot(robot_info_file, robot_chain_number)
     if isinstance(tool_info_file, dict):
         tool_yml = tool_info_file

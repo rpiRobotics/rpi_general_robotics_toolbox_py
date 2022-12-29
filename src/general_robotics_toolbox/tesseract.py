@@ -26,28 +26,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys
-
-if sys.version_info < (3,6):
-    raise Exception("Python version 3.6 or higher required for Tesseract")
-
-
-import numpy as np
-from . import general_robotics_toolbox as rox
-
-from tesseract_robotics.tesseract_common import Translation3d, AngleAxisd, Isometry3d, vector_pair_string
-from tesseract_robotics.tesseract_environment import Environment, Commands, \
-    AddLinkCommand, AddKinematicsInformationCommand, AddSceneGraphCommand
-from tesseract_robotics.tesseract_scene_graph import Link, Joint, JointLimits, \
-    JointType_FIXED, JointType_REVOLUTE, JointType_PRISMATIC, SceneGraph
-from tesseract_robotics.tesseract_common import FilesystemPath, ManipulatorInfo, KinematicsPluginInfo, \
-    PluginInfoContainer
-from tesseract_robotics.tesseract_kinematics import KinGroupIKInput, KinGroupIKInputs, getRedundantSolutions
-from tesseract_robotics.tesseract_srdf import KinematicsInformation, parseKinematicsPluginConfigString
-import yaml
-import io
-from typing import NamedTuple
- 
 """
 Tesseract Robotics integration and support functions for the General Robotics Toolbox
 
@@ -90,6 +68,29 @@ A simple example of using the TesseractRobotics class::
         invkin1_redun.extend(tesseract_robot.redundant_solutions(invkin1_i))
 """
 
+
+import sys
+
+if sys.version_info < (3,6):
+    raise Exception("Python version 3.6 or higher required for Tesseract")
+
+
+import numpy as np
+from . import general_robotics_toolbox as rox
+
+from tesseract_robotics.tesseract_common import Translation3d, AngleAxisd, Isometry3d, vector_pair_string
+from tesseract_robotics.tesseract_environment import Environment, Commands, \
+    AddLinkCommand, AddKinematicsInformationCommand, AddSceneGraphCommand
+from tesseract_robotics.tesseract_scene_graph import Link, Joint, JointLimits, \
+    JointType_FIXED, JointType_REVOLUTE, JointType_PRISMATIC, SceneGraph
+from tesseract_robotics.tesseract_common import FilesystemPath, ManipulatorInfo, KinematicsPluginInfo, \
+    PluginInfoContainer
+from tesseract_robotics.tesseract_kinematics import KinGroupIKInput, KinGroupIKInputs, getRedundantSolutions
+from tesseract_robotics.tesseract_srdf import KinematicsInformation, parseKinematicsPluginConfigString
+import yaml
+import io
+from typing import NamedTuple
+ 
 def transform_to_isometry3d(T):
     """
     Convert a general_robotics_toolbox.Transform to tesseract_common.Isometry3d

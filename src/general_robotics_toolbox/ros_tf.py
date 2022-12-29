@@ -36,30 +36,44 @@ import rospy
 from tf2_ros import TransformException as Exception, ConnectivityException, LookupException, ExtrapolationException
 
 class TransformListener(object):
+    """
+    Class to use a ROS TF2 listener and retrieve transforms
+
+    All arguments to __init__ are passed to tf.TransformListener
+    """
     def __init__(self, *args, **kwargs):
         self.ros_listener=tf.TransformListener(*args, **kwargs)
         
     def canTransform(self, target_frame, source_frame, time = rospy.Time(0)):
+        """
+        Check if transform is available
+        """
         return self.ros_listener.canTransform(target_frame,source_frame, time)
 
     def canTransformFull(self, target_frame, target_time, source_frame, source_time, fixed_frame):
+        """Extended version of canTransform"""
         return self.ros_listener.canTransformFull(target_frame, target_time, source_frame, source_time, fixed_frame)
     
     def waitForTransform(self, target_frame, source_frame, time, timeout, polling_sleep_duration=None):
+        """Wait for transform to be available"""
         return self.ros_listener.waitForTransform(target_frame, source_frame, time, timeout, polling_sleep_duration)
         
     def waitForTransformFull(self, target_frame, target_time, source_frame, source_time, fixed_frame, timeout, polling_sleep_duration=None):
+        """Extended version of waitForTransform"""
         return self.ros_listener.waitForTransformFull(target_frame, target_time, source_frame, source_time, fixed_frame, timeout, polling_sleep_duration)
         
     def clear(self):
+        """Clear the listener"""
         self.ros_listener.clear()
         
     def lookupTransform(self, target_frame, source_frame, time = rospy.Time(0)):
+        """Lookup a transform. Returns rox.Transform"""
         t,r = self.ros_listener.lookupTransform(target_frame, source_frame, time)
         q=[r[3], r[0], r[1], r[2]]
         return rox.Transform(rox.q2R(q), t, target_frame, source_frame)
      
     def lookupTransformFull(self, target_frame, target_time, source_frame, source_time, fixed_frame):
+        """Extended version of lookupTransform"""
         t,r = self.ros_listener.lookupTransformFull(target_frame, target_time, source_frame, source_time, fixed_frame)
         q=[r[3], r[0], r[1], r[2]]
         return rox.Transform(rox.q2R(q), t, target_frame, source_frame)
