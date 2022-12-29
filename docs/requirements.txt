@@ -1,0 +1,5 @@
+numpy
+urdf_parser_py
+pyyaml
+tesseract-robotics
+-e .
