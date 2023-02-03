@@ -1,0 +1,155 @@
+device_info:
+  device:
+    name: fanuc_m10ia
+  manufacturer:
+    name: FANUC
+    uuid: d80db3c2-3de8-41e3-97f9-62765a7063b8
+  model:
+    name: m10ia
+    uuid: 1d3f5111-01fa-4ecf-a11e-76810d5e1dde
+  user_description: FANUC m10ia Robot
+  serial_number: 123456789
+  device_classes:
+    - class_identifier:
+        name: robot
+        uuid: 39b513e7-21b9-4b49-8654-7537473030eb
+      subclasses: 
+        - serial
+        - serial_six_axis
+        - cobot
+  implemented_types:
+    - com.robotraconteur.robotics.robot.Robot
+robot_type: serial
+robot_capabilities:
+- jog_command
+- trajectory_command
+- position_command
+- velocity_command
+chains:
+- kin_chain_identifier: robot_arm
+  H:
+  - x: 0.0
+    y: 0.0
+    z: 1.0
+  - x: 0.0
+    y: 1.0
+    z: 0.0
+  - x: 0.0
+    y: -1.0
+    z: 0.0
+  - x: -1.0
+    y: 0.0
+    z: 0.0
+  - x: 0.0
+    y: -1.0
+    z: 0.0
+  - x: -1.0
+    y: 0.0
+    z: 0.0
+  P:
+  - x: 0.0
+    y: 0.0
+    z: 450 
+  - x: 150
+    y: 0.0
+    z: 0.0
+  - x: 0.
+    y: 0.0
+    z: 600
+  - x: 0.0
+    y: 0.0
+    z: 200
+  - x: 640
+    y: 0.0
+    z: 0.0
+  - x: 100
+    y: 0.0
+    z: 0.0
+  - x: 0.0
+    y: 0.0
+    z: 0.0
+  flange_identifier: tool0
+  flange_pose:
+    orientation:
+      w: 0.7071067811882787
+      x: 0.0
+      y: 0.7071067811848163
+      z: 0.0
+    position:
+      x: 0
+      y: 0.0
+      z: 0
+  joint_numbers:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+joint_info:
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_1
+  joint_limits:
+    effort: 1000
+    lower: -2.96705972
+    upper: 2.96705972
+    velocity: 3.66519142
+    acceleration: 10
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_2
+  joint_limits:
+    effort: 1000
+    lower: -1.57079632
+    upper: 2.79252680
+    velocity: 3.31612557
+    acceleration: 15
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_3
+  joint_limits:
+    effort: 1000
+    lower: -3.14159265
+    upper: 1.55334303
+    velocity: 3.66519142
+    acceleration: 15
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_4
+  joint_limits:
+    effort: 1000
+    lower: -3.31612557
+    upper: 3.31612557
+    velocity: 6.98131700
+    acceleration: 20
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_5
+  joint_limits:
+    effort: 1000
+    lower: -2.44346095
+    upper:  2.44346095
+    velocity: 6.98131700
+    acceleration: 20
+  joint_type: revolute
+  passive: false
+- default_effort_units: newton_meter
+  default_units: radian
+  joint_identifier: joint_6
+  joint_limits:
+    effort: 1000
+    lower: -6.28318530718
+    upper: 6.28318530718
+    velocity: 10.47197551
+    acceleration: 20
+  joint_type: revolute
+  passive: false

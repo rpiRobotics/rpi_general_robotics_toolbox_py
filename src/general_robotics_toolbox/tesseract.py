@@ -640,34 +640,45 @@ def robot_to_opw_inv_kin_parameters(robot):
 
     assert len(robot.joint_type) == 6
 
-    assert np.allclose(robot.H[:,0], ez) 
-    assert np.allclose(robot.H[:,1], ey)
-    assert np.allclose(robot.H[:,2], ey)
-    assert np.allclose(robot.H[:,4], ey)
-    assert np.allclose(robot.H[:,3], robot.H[:,5])
-    assert np.allclose(robot.H[:,5], ez) or np.allclose(robot.H[:,5], ex)
+    def axis_sign(_h, _e):
+        if np.allclose(_h, _e):
+            return 1
+        elif np.allclose(_h, -_e):
+            return -1
+        else:
+            return 0
 
+    assert axis_sign(robot.H[:,0], ez) != 0
+    assert axis_sign(robot.H[:,1], ey) != 0
+    assert axis_sign(robot.H[:,2], ey) != 0
+    assert axis_sign(robot.H[:,4], ey) != 0
+    assert axis_sign(robot.H[:,3], robot.H[:,5]) != 0
+    assert axis_sign(robot.H[:,5], ez) != 0 or axis_sign(robot.H[:,5], ex) != 0
+
+    H2 = np.copy(robot.H)
     P2 = np.copy(robot.P)
 
     offset = np.zeros((6,))
-    sign_corrections = np.ones((6,))
-
-    if np.allclose(robot.H[:,5], ex):
+    
+    if axis_sign(robot.H[:,5], ex) != 0:
         # Check if bend is at joint 2 or 3
         if np.abs(P2[0,2]) > np.abs(P2[2,2]):
             # x is greater than z for link 2, assume bend at joint 2
             R = rox.rot(ey, -np.pi/2.0)
             P2[:,2:] = np.matmul(R, P2[:,2:])
+            H2[:,2:] = np.matmul(R, H2[:,2:])
             offset[1] = -np.pi/2.0
         elif np.abs(P2[0,3] + P2[0,4]) > np.abs(P2[2,3] + P2[2,4]):
             # x is greater than z for link 3, assume bend at joint 3
             R = rox.rot(ey, -np.pi/2.0)
             P2[:,3:] = np.matmul(R, P2[:,3:])
+            H2[:,3:] = np.matmul(R, H2[:,3:])
             offset[2] = -np.pi/2.0
         else:
             # unclear where bend is, assume Joint 2
             R = rox.rot(ey, -np.pi/2.0)
             P2[:,2:] = np.matmul(R, P2[:,2:])
+            H2[:,2:] = np.matmul(R, H2[:,2:])
             offset[1] = -np.pi/2.0
 
     if not np.isclose(P2[0,2],0.0):
@@ -688,6 +699,11 @@ def robot_to_opw_inv_kin_parameters(robot):
     a1 = np.round(P2[0,1],6).item()
     a2 = np.round(P2[0,3],6).item()
     b = np.round(P2[1,1] + P2[1,2] + P2[1,3],6).item()
+
+    sign_corrections = np.ones((6,))
+    expected_axes = [ez,ey,ey,ez,ey,ez]
+    for i in range(len(expected_axes)):
+        sign_corrections[i] = axis_sign(H2[:,i], expected_axes[i])
 
     return OPWInvKinParameters(
         a1,
@@ -735,7 +751,7 @@ def kinematics_plugin_invkin_opw_plugin_info_dict(robot_name, base_link, tip_lin
                                 "c3": opw_params.c3,
                                 "c4": opw_params.c4,
                                 "offsets": opw_params.offsets.tolist(),
-                                "sign_corrections": np.asarray(opw_params.sign_corrections,dtype=np.uint8).tolist()
+                                "sign_corrections": np.asarray(opw_params.sign_corrections,dtype=np.int8).tolist()
 
                             }
                         }

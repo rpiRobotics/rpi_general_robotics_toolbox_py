@@ -401,6 +401,14 @@ def test_tesseract_robot_sawyer():
 
     _assert_tesseract_kinematics(robot, tesseract_robot)
 
+def test_tesseract_robot_fanuc_m10ia():
+    with open(_get_absolute_path("FANUC_m10ia_robot_default_config.yml"), "r") as f:
+        robot = rr_rox.load_robot_info_yaml_to_robot(f)
+
+    tesseract_robot = rox_tesseract.TesseractRobot(robot, "robot", invkin_solver="OPWInvKin")
+
+    _assert_tesseract_kinematics(robot, tesseract_robot)
+
 def test_ur_inv_kin_params_ur5e():
     with open(_get_absolute_path("ur5e_robot_default_config.yml"), "r") as f:
         robot = rr_rox.load_robot_info_yaml_to_robot(f)
