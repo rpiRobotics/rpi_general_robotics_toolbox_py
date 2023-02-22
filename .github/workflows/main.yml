@@ -26,6 +26,8 @@ jobs:
             tesseract_robotics: true
           - python_version: "3.10"
             tesseract_robotics: true
+          - python_version: "3.11"
+            tesseract_robotics: true
     steps:
     - uses: actions/checkout@v3
       with:
