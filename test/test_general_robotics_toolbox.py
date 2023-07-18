@@ -190,6 +190,35 @@ def test_rpy2R():
         rox.R2rpy(R3)
 
 
+def _test_slerp_params(k1,theta1,k2,theta2,t):
+    R1 = rox.rot(k1, theta1)
+    R2 = rox.rot(k2, theta2)
+
+    q1 = rox.R2q(R1)
+    q2 = rox.R2q(R2)
+
+    R1_2 = R1.T @ R2
+    k,theta = rox.R2rot(R1_2)
+
+    R_t = R1 @ rox.rot(k, theta*t)
+    q_t = rox.slerp(q1, q2, t)
+    R_qt = rox.q2R(q_t)
+
+    np.testing.assert_allclose(R_t, R_qt)
+
+    q_t2 = rox.slerp(q1, -q2, t)
+    R_qt2 = rox.q2R(q_t2)
+
+    np.testing.assert_allclose(R_t, R_qt2)
+
+def test_slerp():
+    _test_slerp_params([0.53436371, 0.24406035, 0.80925273], -4.643, 
+                       [-0.71076104,  0.57683297,  0.40259467], 0.25945178, 0.72)
+    _test_slerp_params([0,0,1],0,[0,0,1],1e-7,0.5)
+    _test_slerp_params([0,0,1],1.82,[1,0,0],18.7,0.76)
+    
+
+
 def test_fwdkin():
     
     #TODO: other joint types

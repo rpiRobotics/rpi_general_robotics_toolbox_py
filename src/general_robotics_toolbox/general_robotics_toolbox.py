@@ -298,6 +298,38 @@ def R2rpy(R):
         
     return (r,p,y)    
 
+# Add slerp function using [w,x,y,z] quaternion representation (github copilot)
+def slerp(q0, q1, t):
+    """
+    Spherical linear interpolation between two quaternions
+    
+    :type     q0: numpy.array
+    :param    q0: 4 x 1 vector representation of a quaternion q = [q0;qv]
+    :type     q1: numpy.array
+    :param    q1: 4 x 1 vector representation of a quaternion q = [q0;qv]
+    :type     t: number
+    :param    t: interpolation parameter in the range [0,1]
+    :rtype:   numpy.array
+    :returns: the 4 x 1 interpolated quaternion
+    """
+    
+    assert (t >= 0 and t <= 1), "t must be in the range [0,1]"
+    
+    q0 = q0/np.linalg.norm(q0)
+    q1 = q1/np.linalg.norm(q1)
+    
+    if (np.dot(q0,q1) < 0):
+        q0 = -q0
+    
+    theta = np.arccos(np.dot(q0,q1))
+    
+    if (np.abs(theta) < 1e-6):
+        return q0
+    
+    q = (np.sin((1-t)*theta)*q0 + np.sin(t*theta)*q1)/np.sin(theta)
+    
+    return q/np.linalg.norm(q)
+
 class Robot(object):
     """
     Holds the kinematic information for a single chain robot
