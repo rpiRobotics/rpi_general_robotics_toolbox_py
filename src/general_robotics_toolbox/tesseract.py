@@ -78,7 +78,7 @@ if sys.version_info < (3,6):
 import numpy as np
 from . import general_robotics_toolbox as rox
 
-from tesseract_robotics.tesseract_common import Translation3d, AngleAxisd, Isometry3d, vector_pair_string
+from tesseract_robotics.tesseract_common import Translation3d, AngleAxisd, Isometry3d, VectorPairString
 from tesseract_robotics.tesseract_environment import Environment, Commands, \
     AddLinkCommand, AddKinematicsInformationCommand, AddSceneGraphCommand
 from tesseract_robotics.tesseract_scene_graph import Link, Joint, JointLimits, \
@@ -344,7 +344,7 @@ def tesseract_kinematics_information(robot, robot_name, link_names, joint_names,
         tip_link = link_names[-1]
 
     kinematics_information = KinematicsInformation()
-    chain_group = vector_pair_string()
+    chain_group = VectorPairString()
     chain_group.append((base_link, tip_link))
     kinematics_information.addChainGroup(robot_name, chain_group)
     

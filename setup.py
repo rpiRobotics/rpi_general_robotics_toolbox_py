@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="general_robotics_toolbox", # Replace with your own username
-    version="0.7.1",
+    version="0.7.2",
     author="John Wason",
     author_email="wason@wasontech.com",
     description="General robotics toolbox developed by RPI",
@@ -25,6 +25,6 @@ setuptools.setup(
     extras_require={
         'test': ['pytest'],
         'urdf': ['rospkg','xacro'],
-        'tesseract': ['tesseract-robotics'],
+        'tesseract': ['tesseract-robotics>=0.2.0'],
     }
 )
