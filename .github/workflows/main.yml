@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - python_version: "2.7"
-            tesseract_robotics: false
+          # - python_version: "2.7"
+          #   tesseract_robotics: false
           - python_version: "3.6"
             tesseract_robotics: false
           - python_version: "3.7"
