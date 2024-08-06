@@ -329,6 +329,11 @@ def test_subproblems():
     r3=np.matmul(rox.rot(z,a3[0][0]),rox.rot(y,a3[0][1]))[:,0]        
     np.testing.assert_allclose(r3, z, atol=1e-4)
     
+    a3_2 = rox.subproblem2([0, 0, 0.01851852], [0.01851852, 0, 0], x, y)
+    assert len(a3_2) == 1
+    a3_2_check = [(0.0, 1.5707963267948966)]
+    np.testing.assert_allclose(a3_2, a3_2_check, atol=1e-4)
+    
     #subproblem3
     p4=[.5, 0, 0]
     q4=[0, .75, 0]
