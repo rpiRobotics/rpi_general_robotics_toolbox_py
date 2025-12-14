@@ -49,12 +49,13 @@ def hat(k):
     """
     
     khat=np.zeros((3,3))
-    khat[0,1]=-k[2]
-    khat[0,2]=k[1]
-    khat[1,0]=k[2]
-    khat[1,2]=-k[0]
-    khat[2,0]=-k[1]
-    khat[2,1]=k[0]    
+    k_np = np.reshape(k, (3,))
+    khat[0,1]=-k_np[2]
+    khat[0,2]=k_np[1]
+    khat[1,0]=k_np[2]
+    khat[1,2]=-k_np[0]
+    khat[2,0]=-k_np[1]
+    khat[2,1]=k_np[0]
     return khat
 
 def invhat(khat):
