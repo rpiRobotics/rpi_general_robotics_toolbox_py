@@ -14,20 +14,20 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # - python_version: "2.7"
-          #   tesseract_robotics: false
-          - python_version: "3.6"
-            tesseract_robotics: false
-          - python_version: "3.7"
-            tesseract_robotics: true
           - python_version: "3.8"
-            tesseract_robotics: true
+            tesseract_robotics: false
           - python_version: "3.9"
-            tesseract_robotics: true
+            tesseract_robotics: false
           - python_version: "3.10"
-            tesseract_robotics: true
+            tesseract_robotics: false
           - python_version: "3.11"
-            tesseract_robotics: true
+            tesseract_robotics: false
+          - python_version: "3.12"
+            tesseract_robotics: false
+          - python_version: "3.13"
+            tesseract_robotics: false
+          - python_version: "3.14"
+            tesseract_robotics: false
     steps:
     - uses: actions/checkout@v6
       with:
