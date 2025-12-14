@@ -52,5 +52,5 @@ jobs:
     - name: archive out
       uses: actions/upload-artifact@v6
       with:
-        name: 'out'
+        name: 'out-python-${{ matrix.config.python_version }}'
         path: ./**/*.whl
