@@ -50,7 +50,7 @@ jobs:
       run: python setup.py bdist_wheel
       working-directory: rpi_general_robotics_toolbox_py
     - name: archive out
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v6
       with:
         name: 'out'
         path: ./**/*.whl
