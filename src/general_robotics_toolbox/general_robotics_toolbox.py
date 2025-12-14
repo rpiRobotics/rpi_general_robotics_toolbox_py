@@ -763,8 +763,8 @@ def subproblem2(p, q, k1, k2):
     if (np.abs(gamma) < eps):
         cm=np.array([k1, k2, np.cross(k1,k2)]).T
         c1 = np.dot(cm, np.hstack((a, gamma)))
-        theta2 = subproblem1(k2, p, c1)
-        theta1 = -subproblem1(k1, q, c1)
+        theta2 = subproblem1(p, c1, k2)
+        theta1 = -subproblem1(q, c1, k1)
         return [(theta1, theta2)]
     
     cm=np.array([k1, k2, np.cross(k1,k2)]).T

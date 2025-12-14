@@ -329,6 +329,14 @@ def test_subproblems():
     r3=np.matmul(rox.rot(z,a3[0][0]),rox.rot(y,a3[0][1]))[:,0]        
     np.testing.assert_allclose(r3, z, atol=1e-4)
     
+    # subproblem2, another test with a random scale factor
+    scale = 0.01851852 # scale factor for random test
+    a3_2 = rox.subproblem2(scale*np.array(z), scale*np.array(x), x, y)
+    assert len(a3_2) == 1
+    
+    r3_2 = np.matmul(rox.rot(x,a3_2[0][0]),rox.rot(y,a3_2[0][1]))[:,1]
+    np.testing.assert_allclose(r3_2, y, atol=1e-4)
+    
     #subproblem3
     p4=[.5, 0, 0]
     q4=[0, .75, 0]
